@@ -1,10 +1,13 @@
-import { Download, FastForward, LogOut, RotateCcw, Route, Terminal, Wifi, WifiOff } from 'lucide-react'
+import { ArrowUpRight, BatteryCharging, Gauge, Target, Download, FastForward, LogOut, RotateCcw, Route, Terminal, Wifi, WifiOff } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { realtime, useInstall, useNow, useQuery, useRealtimePaused, useSession } from '../app/hooks'
+import { rangeBudget } from '../domain/calc'
+import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
+import { POLICY } from '../domain/policy'
 import { Avatar } from '../components/Shell'
 import { Page, PageHeader } from '../components/Shell'
-import { Button, Card, Chip, Notice, SectionTitle, Segmented, Sheet, useAction } from '../components/ui'
+import { BarGauge, Button, Card, Chip, Notice, Range, SectionTitle, Segmented, Sheet, useAction } from '../components/ui'
 import { isoIst } from '../lib/format'
 import { api } from '../server/api'
 import { readDb } from '../server/db'
@@ -21,12 +24,15 @@ export default function Settings() {
   const db = useQuery(async () => ({ ok: true as const, data: readDb(), request_id: '' }))
   const offset = db.data?.clock_offset_ms ?? 0
   const provider = db.data?.settings.route_provider ?? 'DEMO'
+  const vehicle = db.data?.vehicles.find((v) => v.owner_id === user.id)
+  const model = vehicle ? modelById(vehicle.model_id) : undefined
+  const budget = vehicle && model ? rangeBudget(model, vehicle.soc, POLICY) : null
 
   return (
     <>
-      <PageHeader back title="Settings & demo" />
+      <PageHeader back title="Profile & settings" />
       <Page className="mx-auto max-w-2xl">
-        <Card className="flex items-center gap-3">
+        <div className="flex items-center gap-3 py-2">
           <Avatar user={user} />
           <div className="min-w-0 flex-1">
             <div className="font-semibold">{user.display_name}</div>
@@ -35,8 +41,54 @@ export default function Settings() {
           <Button size="sm" variant="secondary" onClick={() => nav('/signin')}>
             Switch
           </Button>
-        </Card>
+        </div>
 
+        {vehicle && model && budget ? (
+          <section aria-label="Your car" className="mt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-2xl font-semibold tracking-tight">{model.make}</h2>
+                <p className="mt-1 text-sm text-ink-2">{model.model} · {model.variant}</p>
+              </div>
+              <Chip tone="volt">Demo profile</Chip>
+            </div>
+            <figure className="relative -mx-2 mt-1 mb-4">
+              <img src={`${import.meta.env.BASE_URL}car-profile.png`} alt="Illustrative white electric SUV with a black roof, front three-quarter view" className="aspect-[1.65] w-full object-contain" />
+              <figcaption className="text-center text-[10px] text-muted">Illustrative vehicle · your saved specifications below</figcaption>
+            </figure>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="row-span-2 flex min-w-0 flex-col !rounded-[1.75rem] !p-4">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-ink-2"><BatteryCharging className="size-4 shrink-0" /> Battery level</div>
+                <div className="mt-6 flex items-baseline gap-1"><span className="text-[2.6rem] font-medium leading-none tracking-tight">{vehicle.soc}</span><span className="text-lg text-ink-2">%</span></div>
+                <div className="mt-auto pt-7">
+                  <div className="mb-2 flex justify-between text-[10px] text-muted"><span>0%</span><span>100%</span></div>
+                  <BarGauge value={vehicle.soc} segments={11} tone="volt" height="h-14" />
+                  <Range className="mt-4" label="Profile battery level" value={vehicle.soc} min={0} max={100} onChange={(soc) => void api.updateVehicle(vehicle.id, { soc })} />
+                </div>
+              </Card>
+              <Card className="min-w-0 !rounded-[1.75rem] !p-4">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-ink-2"><Gauge className="size-4 shrink-0" /> Range budget</div>
+                <div className="mt-5 flex flex-wrap items-baseline gap-1"><span className="text-[2.25rem] font-medium leading-none tracking-tight">{(budget.range_budget_m / 1000).toFixed(1)}</span><span className="text-lg text-muted">km</span></div>
+              </Card>
+              <Card className="min-w-0 !rounded-[1.75rem] !p-4">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-ink-2"><Target className="size-4 shrink-0" /> Charge target</div>
+                <div className="mt-5 flex items-baseline gap-1"><span className="text-[2.25rem] font-medium leading-none tracking-tight">{vehicle.target_soc}</span><span className="text-lg text-muted">%</span></div>
+              </Card>
+            </div>
+            <div className="mt-5 flex items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-1.5">
+                <Chip>{(model.usable_battery_wh / 1000).toFixed(0)} kWh usable</Chip>
+                {model.connectors.map((c) => <Chip key={c.standard} tone="outline">{CONNECTOR_LABEL[c.standard]}</Chip>)}
+              </div>
+              <Link to="/vehicle" className="flex shrink-0 items-center gap-1 text-xs font-semibold text-volt-strong">Edit car <ArrowUpRight className="size-4" /></Link>
+            </div>
+            <p className="mt-3 text-[11px] leading-relaxed text-muted">Battery level is entered by you, not live telemetry. Range budget includes {POLICY.reserve_pct}% reserve and ×{POLICY.uncertainty} uncertainty.</p>
+          </section>
+        ) : null}
+
+        <details className="mt-6 rounded-3xl border border-line bg-surface p-4">
+          <summary className="cursor-pointer text-sm font-semibold">App & demo settings</summary>
         <SectionTitle>App</SectionTitle>
         <Card className="space-y-3">
           {standalone ? (
@@ -114,6 +166,8 @@ export default function Settings() {
         <Notice>
           This build runs entirely in your browser — the “server”, database and realtime channel are simulated with local storage, cross-tab locks and a broadcast channel. Listings are synthetic; payments, refunds, metering, receipts and payouts are demo-only; tariffs (₹14/kWh, ₹20 Standard fee) are illustrative, not approved tariffs or tax treatment. Range estimates are disclosed assumptions, not guarantees.
         </Notice>
+
+        </details>
 
         <Button variant="secondary" className="mt-6 w-full" onClick={() => (signOut(), nav('/signin'))}>
           <LogOut className="size-4" /> Sign out
