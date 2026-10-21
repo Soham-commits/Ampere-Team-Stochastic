@@ -7,6 +7,7 @@ import { runExpiryWorker } from './server/bookings'
 import { ensureSeeded } from './server/db'
 import { signIn } from './server/session'
 
+const TripPlanner = lazy(() => import('./features/trips/TripPlanner'))
 const Welcome = lazy(() => import('./pages/Welcome'))
 const SignIn = lazy(() => import('./pages/SignIn'))
 const DriverHome = lazy(() => import('./pages/DriverHome'))
@@ -80,6 +81,7 @@ export function App() {
         <Route path="/booking/:id" element={a(<Booking />)} />
         <Route path="/bookings" element={a(<Bookings />)} />
         <Route path="/receipt/:id" element={a(<Receipt />)} />
+        <Route path="/trip-planner" element={a(<TripPlanner />)} />
         <Route path="/vehicle" element={a(<Vehicle />)} />
         <Route path="/inbox" element={a(<InboxPage />)} />
         <Route path="/settings" element={a(<SettingsPage />)} />
