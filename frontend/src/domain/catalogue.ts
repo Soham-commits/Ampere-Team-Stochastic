@@ -230,7 +230,7 @@ const SITE_SEEDS: SiteSeed[] = [
       {
         res: { id: 'res-cafe-2', label: 'Bay 2 · wallbox', rated_power_kw: 7.4, site_power_limit_kw: 7.4, current_status: 'AVAILABLE', status_source: 'HOST_UPDATE', reservable: true },
         statusAgeMin: 4,
-        connectors: [{ id: 'con-cafe2-t2', standard: 'TYPE2', mode: 'AC', rated_power_kw: 7.4, cable: 'HOST_TETHERED', active: true }],
+        connectors: [{ id: 'con-cafe2-t2', standard: 'TYPE2', mode: 'AC', rated_power_kw: 7.4, cable: 'HOST_OR_DRIVER', active: true }],
         rule: { weekdays: ALL_DAYS, start_min: 0, end_min: 1440 },
       },
     ],
@@ -490,7 +490,7 @@ for (const [index, spec] of [
   SITE_SEEDS.push({
     site: { ...template.site, id: spec.id, name: spec.name, site_type: spec.type, public_area: spec.area, approx_lat: spec.lat, approx_lng: spec.lng, route_fixture_m: spec.distance, access_summary: 'Dedicated visitor charging bay. Host confirmation required before travel.', amenities: index === 0 ? ['Café', 'Washroom', 'Wi-Fi'] : ['Covered bay', 'Washroom', 'Security desk'] },
     priv: { exact_lat: spec.lat, exact_lng: spec.lng, full_address: `${spec.name}, ${spec.area}, Pune (synthetic demo address)`, entrance_instructions: 'Use the marked visitor entrance and ask the host for the charging bay.', contact_reference: 'Contact your host in Ampere (demo)' },
-    resources: [{ res: { id: `res-${suffix}-1`, label: 'Visitor bay · wallbox', rated_power_kw: 7.4, site_power_limit_kw: 7.4, current_status: 'AVAILABLE', status_source: 'HOST_UPDATE', reservable: true }, statusAgeMin: 3, connectors: [{ id: `con-${suffix}-t2`, standard: 'TYPE2', mode: 'AC', rated_power_kw: 7.4, cable: 'HOST_TETHERED', active: true }], rule: { weekdays: ALL_DAYS, start_min: 0, end_min: 1440 } }],
+    resources: [{ res: { id: `res-${suffix}-1`, label: 'Visitor bay · wallbox', rated_power_kw: 7.4, site_power_limit_kw: 7.4, current_status: 'AVAILABLE', status_source: 'HOST_UPDATE', reservable: true }, statusAgeMin: 3, connectors: [{ id: `con-${suffix}-t2`, standard: 'TYPE2', mode: 'AC', rated_power_kw: 7.4, cable: 'HOST_OR_DRIVER', active: true }], rule: { weekdays: ALL_DAYS, start_min: 0, end_min: 1440 } }],
     checks: ['APPROVED', 'APPROVED', 'APPROVED', 'APPROVED'],
   })
 }

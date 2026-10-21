@@ -56,13 +56,13 @@ describe('full journey', () => {
     const s = await slot('res-cafe-1')
     const q = await B.createQuote(driver, { connector_id: 'con-cafe-t2', model_id: 'vm-nexon-ev-demo', soc: 4, origin: DEMO_ORIGIN, ...s, plan: 'STANDARD', energy: { kind: 'GRID', grid_wh: 8000 } })
     expect(q.snapshot.total_paise).toBe(13200)
-    const b = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'k1', policy_acceptance_version: POLICY.version })
+    const b = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'k1', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version })
     // Idempotent retry
-    const again = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'k1', policy_acceptance_version: POLICY.version })
+    const again = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'k1', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version })
     expect(again.booking_id).toBe(b.booking_id)
     await expect(B.depart(driver, b.booking_id)).rejects.toMatchObject({ code: 'HOST_CONFIRMATION_REQUIRED' })
     await expect(B.acceptBooking(homeHost, b.booking_id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
-    await B.acceptBooking(cafeHost, b.booking_id)
+    await B.acceptBooking(cafeHost, b.booking_id, { equipment_choice: 'HOST_CABLE' })
     await B.payDemo(driver, b.booking_id, 'SUCCESS', 'p1')
     await B.payDemo(driver, b.booking_id, 'SUCCESS', 'p1')
     await B.depart(driver, b.booking_id)
@@ -88,8 +88,8 @@ describe('AT06/AT07 concurrency and expiry', () => {
     const qa = await B.createQuote(driver, { connector_id: 'con-cafe-t2', model_id: 'vm-nexon-ev-demo', soc: 4, origin: DEMO_ORIGIN, ...s, plan: 'BASIC', energy: { kind: 'GRID', grid_wh: 4000 } })
     const qb = await B.createQuote(jury, { connector_id: 'con-cafe-ccs', model_id: 'vm-nexon-ev-demo', soc: 4, origin: DEMO_ORIGIN, ...s, plan: 'BASIC', energy: { kind: 'GRID', grid_wh: 4000 } })
     const results = await Promise.allSettled([
-      B.createBooking(driver, { quote_id: qa.id, idempotency_key: 'a', policy_acceptance_version: POLICY.version }),
-      B.createBooking(jury, { quote_id: qb.id, idempotency_key: 'b', policy_acceptance_version: POLICY.version }),
+      B.createBooking(driver, { quote_id: qa.id, idempotency_key: 'a', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version }),
+      B.createBooking(jury, { quote_id: qb.id, idempotency_key: 'b', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version }),
     ])
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1)
     expect(results.find((r) => r.status === 'rejected')).toMatchObject({ reason: { code: 'SLOT_UNAVAILABLE' } })
@@ -97,7 +97,7 @@ describe('AT06/AT07 concurrency and expiry', () => {
   it('late host acceptance fails and releases the slot', async () => {
     const s = await slot('res-cafe-2')
     const q = await B.createQuote(driver, { connector_id: 'con-cafe2-t2', model_id: 'vm-nexon-ev-demo', soc: 4, origin: DEMO_ORIGIN, ...s, plan: 'BASIC', energy: { kind: 'GRID', grid_wh: 4000 } })
-    const b = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'x', policy_acceptance_version: POLICY.version })
+    const b = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'x', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version })
     await mutateDb((d) => { d.clock_offset_ms = 121_000 })
     await expect(B.acceptBooking(cafeHost, b.booking_id)).rejects.toMatchObject({ code: 'HOLD_EXPIRED' })
     expect(replay(readStream(b.booking_id))!.occupancy_active).toBe(false)
@@ -133,8 +133,9 @@ describe('AT16/AT19/AT22 jury console', () => {
   it('a normal booking can be confirmed by READY and a console booking by the host button', async () => {
     const s = await slot('res-cafe-2')
     const q = await B.createQuote(driver, { connector_id: 'con-cafe2-t2', model_id: 'vm-nexon-ev-demo', soc: 4, origin: DEMO_ORIGIN, ...s, plan: 'BASIC', energy: { kind: 'GRID', grid_wh: 4000 } })
-    const b = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'n', policy_acceptance_version: POLICY.version })
+    const b = await B.createBooking(driver, { quote_id: q.id, idempotency_key: 'n', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version })
     expect((await runConsoleCommand(jury, `READY|${b.booking_ref}|2026-10-22T10:30:00`, 'r')).ok).toBe(true)
+    expect(replay(readStream(b.booking_id))!).toMatchObject({ equipment_confirmed: 'HOST_CABLE', equipment_confirmation_simulated: true })
     const t = await runConsoleCommand(jury, 'TICKET|Tata Nexon EV|4|18.5362|73.8939|CCS2', 't')
     await B.acceptBooking(cafeHost, t.booking_id!)
     expect(replay(readStream(t.booking_id!))!.lifecycle).toBe('host_confirmed')

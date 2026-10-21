@@ -1,3 +1,5 @@
+import { EquipmentConfirmationSheet } from '../features/booking-equipment/EquipmentConfirmationSheet'
+import { EquipmentSummary } from '../features/booking-equipment/EquipmentSummary'
 import { Ban, CarFront, Check, Copy, CreditCard, FastForward, KeyRound, MapPin, Navigation, Play, Receipt, Square } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -127,6 +129,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
   const [cancelOpen, setCancelOpen] = useState(false)
   const [reason, setReason] = useState('Plans changed')
   const [declineOpen, setDeclineOpen] = useState(false)
+  const [acceptOpen, setAcceptOpen] = useState(false)
 
   if (state.ended && state.lifecycle !== 'done') {
     return isDriver ? (
@@ -138,7 +141,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
     ) : null
   }
 
-  const panels: React.ReactNode[] = []
+  const panels: React.ReactNode[] = state.request.equipment_choice || state.equipment_confirmed ? [<EquipmentSummary key="equipment" state={state} />] : []
 
   /* requested */
   if (state.lifecycle === 'requested') {
@@ -151,7 +154,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
             <Button variant="secondary" onClick={() => setDeclineOpen(true)}>
               Decline
             </Button>
-            <Button variant="volt" loading={busy === 'accept'} onClick={() => run('accept', () => api.accept(id, seq), 'Confirmed — HostConfirmed appended')}>
+            <Button variant="volt" loading={busy === 'accept'} onClick={() => setAcceptOpen(true)}>
               <Check className="size-4" /> Confirm
             </Button>
           </div>
@@ -382,6 +385,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
   return (
     <>
       {panels}
+      <EquipmentConfirmationSheet open={acceptOpen} onClose={() => setAcceptOpen(false)} role="host" requested={state.request.equipment_choice} mode={state.request.quote.charging_mode} equipmentOptions={state.request.quote.equipment_options} busy={busy === 'accept'} canConfirm={actions.includes('ACCEPT')} onConfirm={async (choice) => { const result = await run('accept', () => api.accept(id, seq, choice), 'Booking and equipment confirmed'); if (result) setAcceptOpen(false) }} />
       <Sheet open={cancelOpen} onClose={() => setCancelOpen(false)} title="Cancel this booking?">
         <p className="text-sm text-ink-2">
           {state.payment === 'CAPTURED' ? `A simulated refund of ${rupees(state.paid_paise, { decimals: true })} (unused service plus fee) goes back to the original method.` : 'No payment has been taken, so nothing is charged.'} The slot is released and a BookingCancelled event is appended.

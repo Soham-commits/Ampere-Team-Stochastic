@@ -1,7 +1,7 @@
 import { compatibility, rangeBudget, routeConfidence, type RangeBudget, type RouteEvidence } from '../domain/calc'
 import { modelById } from '../domain/catalogue'
 import { POLICY } from '../domain/policy'
-import type { ChargingMode, ConnectorStandard, LatLng, ResourceStatus, Site, SiteType, StatusSource, VehicleModel } from '../domain/types'
+import type { ChargingMode, Connector, ConnectorStandard, LatLng, ResourceStatus, Site, SiteType, StatusSource, VehicleModel } from '../domain/types'
 import { readDb, serverNow } from './db'
 import { nextSlots } from './availability'
 import { ApiFail } from './http'
@@ -22,7 +22,7 @@ export interface ResultConnector {
   mode: ChargingMode
   rated_power_kw: number
   effective_power_kw: number
-  cable: 'HOST_TETHERED' | 'DRIVER_REQUIRED'
+  cable: Connector['cable']
 }
 
 export interface SearchResult {

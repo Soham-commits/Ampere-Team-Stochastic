@@ -1,3 +1,5 @@
+import { EquipmentConfirmationSheet } from '../features/booking-equipment/EquipmentConfirmationSheet'
+import type { EquipmentChoice } from '../domain/equipment'
 import { SolarBadge } from '../features/solar/SolarBadge'
 import { Accessibility, CalendarClock, Clock, Info, ShieldCheck, Zap } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -52,6 +54,7 @@ export default function Station() {
   const [target, setTarget] = useState<number>(vehicle?.target_soc ?? 80)
   const [plan, setPlan] = useState<Plan>('STANDARD')
   const [accepted, setAccepted] = useState(false)
+  const [equipmentOpen, setEquipmentOpen] = useState(false)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [quoteError, setQuoteError] = useState<{ code: string; message: string; fields?: Record<string, string> } | null>(null)
   const [quoting, setQuoting] = useState(false)
@@ -98,10 +101,10 @@ export default function Station() {
     return () => clearTimeout(t)
   }, [conn?.id, start, duration, plan, mode, gridKwh, target, soc, model?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const request = async () => {
+  const request = async (equipment_choice: EquipmentChoice) => {
     if (!quote) return
-    const res = await run('book', () => api.createBooking({ quote_id: quote.id, idempotency_key: idemKey.current, policy_acceptance_version: POLICY.version }), (d) => `Request ${d.booking_ref} sent to the host`)
-    if (res) nav(`/booking/${res.booking_id}`)
+    const res = await run('book', () => api.createBooking({ quote_id: quote.id, idempotency_key: idemKey.current, policy_acceptance_version: POLICY.version, equipment_choice }), (d) => `Request ${d.booking_ref} sent to the host`)
+    if (res) { setEquipmentOpen(false); nav(`/booking/${res.booking_id}`) }
   }
 
   if (detail.loading && !detail.data) return <Page className="pt-6"><Skeleton className="h-64" /></Page>
@@ -205,7 +208,7 @@ export default function Station() {
                           {CONNECTOR_LABEL[c.standard]} · {c.mode} · {c.rated_power_kw} kW
                         </span>
                         <span className="block truncate text-xs text-muted">
-                          {r.label} · {c.cable === 'HOST_TETHERED' ? 'cable provided' : 'bring your own cable'}
+                          {r.label} · {c.cable === 'HOST_TETHERED' ? 'cable provided' : c.cable === 'HOST_OR_DRIVER' ? 'cable or socket · confirm when booking' : 'bring your own cable'}
                           {ok ? ` · ${ok.effective_power_kw} kW for your car` : ' · not compatible'}
                         </span>
                       </span>
@@ -335,7 +338,7 @@ export default function Station() {
                     I accept the booking policy ({POLICY.version}): host confirms within 2 min, checkout within 5 min, full refund of unused service if cancelled. Don’t travel until the host confirms.
                   </span>
                 </label>
-                <Button size="lg" className="w-full" disabled={!quote || !accepted || quoteValid <= 0} loading={busy === 'book'} onClick={request}>
+                <Button size="lg" className="w-full" disabled={!quote || !accepted || quoteValid <= 0} loading={busy === 'book'} onClick={() => setEquipmentOpen(true)}>
                   Request booking {quote ? `· ${rupees(quote.snapshot.total_paise)}` : ''}
                 </Button>
                 <p className="flex items-start gap-2 text-xs text-muted">
@@ -346,6 +349,7 @@ export default function Station() {
           ) : null}
         </div>
       </Page>
+      <EquipmentConfirmationSheet open={equipmentOpen} onClose={() => setEquipmentOpen(false)} role="driver" mode={quote?.snapshot.charging_mode ?? 'AC'} equipmentOptions={quote?.snapshot.equipment_options} busy={busy === 'book'} canConfirm={!!quote && accepted && quoteValid > 0} onConfirm={request} />
     </>
   )
 }

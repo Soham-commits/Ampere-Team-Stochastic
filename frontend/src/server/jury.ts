@@ -150,8 +150,9 @@ export async function runConsoleCommand(ctx: Ctx, line: string, commandId: strin
   if (s.outcome === 'HOLD_EXPIRED' || s.outcome === 'CHECKOUT_EXPIRED') return fail('HOLD_EXPIRED', `${h.booking_ref} expired before confirmation. Its expiry history is kept.`, rid, pre)
   if (s.ended) return fail('BOOKING_ENDED', `${h.booking_ref} has ended (${s.outcome}).`, rid, pre)
 
+  if (asJury && !asHost && s.request.equipment_choice) pre.push({ text: 'DEMO equipment confirmation follows the driver’s request; no real host or hardware confirmation.', tone: 'dim' })
   try {
-    const r = await acceptBooking(ctx, h.id, { source: 'JURY_CONSOLE', reported_at: parsed.reportedAt, idempotency_key: `${actor.id}:READY:${commandId}` })
+    const r = await acceptBooking(ctx, h.id, { source: 'JURY_CONSOLE', reported_at: parsed.reportedAt, idempotency_key: `${actor.id}:READY:${commandId}`, equipment_choice: asJury && !asHost ? s.request.equipment_choice : undefined })
     return {
       ok: true,
       lines: [

@@ -89,6 +89,13 @@ export async function seedDriverDemoBookings() {
         d.tariffs.push(...catalogue.tariffs.filter((t) => missing.includes(t.site_id)))
       })
     }
+    // These sample AC wallboxes have sockets plus a host-supplied detachable cable.
+    const flexibleIds = ['con-cafe2-t2', 'con-riverside-t2', 'con-courtyard-t2']
+    if (readDb().connectors.some((c) => flexibleIds.includes(c.id) && c.cable !== 'HOST_OR_DRIVER')) {
+      await mutateDb((db) => {
+        for (const connector of db.connectors) if (flexibleIds.includes(connector.id)) connector.cable = 'HOST_OR_DRIVER'
+      })
+    }
     const sources = readDb().bookings.filter((b) => b.driver_id === 'u-driver2')
     for (const [index, source] of [sources[0], sources[1], sources[0], sources[1]].entries()) {
       if (!source) continue

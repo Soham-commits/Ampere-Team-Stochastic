@@ -33,6 +33,6 @@ it('new nearby chargers pass strict discovery and accept a normal booking reques
   const start = nextSlots('res-riverside-1', 90, now + 15 * 60_000, now, 1)[0]
   const actor = { actor: userById('u-driver')! }
   const quote = await createQuote(actor, { connector_id: 'con-riverside-t2', model_id: 'vm-nexon-ev-demo', soc: 4, origin: DEMO_ORIGIN, start_at: new Date(start).toISOString(), end_at: new Date(start + 90 * 60_000).toISOString(), plan: 'BASIC', energy: { kind: 'GRID', grid_wh: 4000 } })
-  const booking = await createBooking(actor, { quote_id: quote.id, idempotency_key: 'new-site-test', policy_acceptance_version: POLICY.version })
+  const booking = await createBooking(actor, { quote_id: quote.id, idempotency_key: 'new-site-test', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version })
   expect(replay(readStream(booking.booking_id))!.request.site_id).toBe('site-riverside')
 })

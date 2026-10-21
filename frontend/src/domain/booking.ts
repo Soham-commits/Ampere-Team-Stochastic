@@ -1,3 +1,4 @@
+import type { EquipmentChoice } from './equipment'
 import type { ConnectorStandard, ChargingMode, LatLng, Plan } from './types'
 
 /* ---------------- Events ---------------- */
@@ -30,6 +31,7 @@ export interface QuoteSnapshot {
   quote_id: string
   plan: Plan
   connector_standard: ConnectorStandard
+  equipment_options?: EquipmentChoice[]
   charging_mode: ChargingMode
   effective_power_kw: number
   grid_wh: number
@@ -68,12 +70,13 @@ export interface RequestedPayload {
   policy_version: string
   quote: QuoteSnapshot
   vehicle: VehicleSnapshot
+  equipment_choice?: EquipmentChoice
   command_request_id?: string
 }
 
 export type EventPayloads = {
   BookingRequested: RequestedPayload
-  HostConfirmed: { checkout_deadline: string; delegated_host_account_id?: string; jury_simulation?: boolean }
+  HostConfirmed: { checkout_deadline: string; equipment_choice?: EquipmentChoice; delegated_host_account_id?: string; jury_simulation?: boolean }
   HostDeclined: { reason: string }
   HoldExpired: { phase: 'HOST_RESPONSE' | 'CHECKOUT' }
   PaymentFailed: { payment_attempt_id: string }
@@ -113,6 +116,8 @@ export interface BookingState {
   ended: boolean
   occupancy_active: boolean
   request: RequestedPayload
+  equipment_confirmation_simulated: boolean
+  equipment_confirmed: EquipmentChoice | null
   host_confirmed_at: string | null
   checkout_deadline: string | null
   payment: 'NONE' | 'FAILED' | 'CAPTURED' | 'REFUNDED'
@@ -155,6 +160,8 @@ export function apply(s: BookingState | null, e: BookingEvent): BookingState {
       ended: false,
       occupancy_active: true,
       request: p,
+      equipment_confirmation_simulated: false,
+      equipment_confirmed: null,
       host_confirmed_at: null,
       checkout_deadline: null,
       payment: 'NONE',
@@ -180,6 +187,8 @@ export function apply(s: BookingState | null, e: BookingEvent): BookingState {
       throw new UnsupportedStreamError('Duplicate BookingRequested')
     case 'HostConfirmed': {
       const p = e.payload as EventPayloads['HostConfirmed']
+      n.equipment_confirmed = p.equipment_choice ?? null
+      n.equipment_confirmation_simulated = !!p.jury_simulation
       n.lifecycle = 'host_confirmed'
       n.host_confirmed_at = e.recorded_at
       n.checkout_deadline = p.checkout_deadline
