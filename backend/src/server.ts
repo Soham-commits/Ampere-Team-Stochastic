@@ -4,7 +4,9 @@ import { cors } from 'hono/cors'
 import { config } from './env'
 import { issueToken, tokenFrom, verifyToken } from './auth'
 import { bookings, handle, readDb, type User } from './engine'
+import { createRealtime } from './realtime'
 import { createMethods, runJury } from './rpc'
+import { snapshotFor } from './snapshot'
 import { connect, migrate, type Sql } from './store/pg'
 import { createPersistence, PersistenceError } from './store/persist'
 
@@ -13,6 +15,7 @@ export async function createServer(opts: { databaseUrl?: string; worker?: boolea
   await migrate(sql)
   const persistence = createPersistence(sql)
   await persistence.boot()
+  const realtime = createRealtime(persistence)
   const methods = createMethods(sql, persistence)
   const startedAt = new Date().toISOString()
 
@@ -23,7 +26,7 @@ export async function createServer(opts: { databaseUrl?: string; worker?: boolea
 
   app.get('/healthz', async (c) => {
     const [{ events }] = await sql<{ events: number }[]>`SELECT count(*)::int AS events FROM booking_events`
-    return c.json({ ok: true, started_at: startedAt, bookings: readDb().bookings.length, events })
+    return c.json({ ok: true, started_at: startedAt, bookings: readDb().bookings.length, events, realtime_clients: realtime.size })
   })
 
   // Demo account sign-in: picks one of the synthetic accounts and returns a signed tab token.
@@ -33,6 +36,10 @@ export async function createServer(opts: { databaseUrl?: string; worker?: boolea
     if (!issued) return c.json({ ok: false, error: { code: 'UNKNOWN_ACCOUNT', message: 'Unknown demo account.' } }, 404)
     return c.json({ ok: true, data: { user_id: body.user_id, ...issued } })
   })
+
+  app.get('/api/snapshot', (c) => c.json(snapshotFor(actorOf(c))))
+
+  app.get('/api/stream', (c) => realtime.handler(c, actorOf(c)))
 
   app.post('/api/console', async (c) => {
     const actor = actorOf(c)

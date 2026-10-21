@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { replay } from '../../frontend/src/domain/booking'
 import { POLICY } from '../../frontend/src/domain/policy'
-import { EVENTS_PREFIX, kvKeys, kvRemove, serverNow } from '../src/engine'
+import { EVENTS_PREFIX, kvKeys, kvRemove, readDb, serverNow } from '../src/engine'
 import { client, DEMO_ORIGIN, startServer, type TestServer } from './helpers'
 
 let server: TestServer
@@ -125,6 +125,22 @@ describe('collisions over HTTP', () => {
     ])
     expect(results.filter((r) => r.ok)).toHaveLength(1)
     expect(results.find((r) => !r.ok)?.error?.code).toBe('SLOT_UNAVAILABLE')
+  })
+})
+
+describe('privacy of the browser replica', () => {
+  it('never sends private access details, token hashes or other drivers’ data', async () => {
+    const d = driver()
+    const t = await jury().console('TICKET|Tata Nexon EV|4|18.5362|73.8939|CCS2', 'cmd-p')
+    expect(t.booking_id).toBeTruthy()
+    for (const c of [d, cafeHost(), homeHost(), client(server, null)]) {
+      const text = JSON.stringify(await c.snapshot())
+      for (const secret of ['full_address', 'exact_lat', 'entrance_instructions', 'token_hash', '"arrival_tokens":[{', '"payments":[{', '"quotes":[{']) expect(text).not.toContain(secret)
+    }
+    const snap = await d.snapshot()
+    expect(snap.db.bookings.every((b: { driver_id: string }) => b.driver_id === 'u-driver')).toBe(true)
+    expect(snap.db.vehicles.every((v: { owner_id: string }) => v.owner_id === 'u-driver')).toBe(true)
+    expect(readDb().site_private.length).toBeGreaterThan(0) // still on the server
   })
 })
 
