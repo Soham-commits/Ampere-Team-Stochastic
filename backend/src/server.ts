@@ -7,6 +7,7 @@ import { bookings, handle, readDb, type User } from './engine'
 import { createRealtime } from './realtime'
 import { createMethods, runJury } from './rpc'
 import { snapshotFor } from './snapshot'
+import { syncRealChargers } from './seed/realChargers'
 import { serveWeb } from './static'
 import { connect, migrate, type Sql } from './store/pg'
 import { createPersistence, PersistenceError } from './store/persist'
@@ -14,7 +15,7 @@ import { createPersistence, PersistenceError } from './store/persist'
 export async function createServer(opts: { databaseUrl?: string; worker?: boolean } = {}) {
   const sql: Sql = connect(opts.databaseUrl)
   await migrate(sql)
-  const persistence = createPersistence(sql)
+  const persistence = createPersistence(sql, { seed: syncRealChargers })
   await persistence.boot()
   const realtime = createRealtime(persistence)
   const methods = createMethods(sql, persistence)
