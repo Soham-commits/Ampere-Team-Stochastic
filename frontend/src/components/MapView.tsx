@@ -24,7 +24,7 @@ export interface MapSite {
   label: string
 }
 
-function FitView({ origin, sites, budgetM }: { origin: LatLng; sites: MapSite[]; budgetM: number }) {
+function FitView({ origin, sites, budgetM, compact }: { origin: LatLng; sites: MapSite[]; budgetM: number; compact: boolean }) {
   const map = useMap()
   const key = `${origin.lat},${origin.lng},${sites.map((s) => s.site.id).join()},${budgetM}`
   useEffect(() => {
@@ -36,7 +36,7 @@ function FitView({ origin, sites, budgetM }: { origin: LatLng; sites: MapSite[];
       const bounds = L.latLngBounds(pts)
       // With no pins, show the (illustrative) budget ring instead, capped to keep the view local.
       if (!sites.length && budgetM > 0) bounds.extend(L.latLng(origin.lat, origin.lng).toBounds(Math.min(budgetM, 6000) * 2))
-      map.fitBounds(bounds.pad(0.15), { paddingTopLeft: [24, 140], paddingBottomRight: [24, 200], maxZoom: 15 })
+      map.fitBounds(bounds.pad(0.15), { paddingTopLeft: [24, compact ? 60 : 140], paddingBottomRight: [24, compact ? 45 : 200], maxZoom: 15 })
     }
     const raf = requestAnimationFrame(fit)
     const ro = new ResizeObserver(() => fit())
@@ -65,6 +65,7 @@ export function MapView({
   selectedId,
   onSelect,
   className,
+  compact = false,
 }: {
   origin: LatLng
   budgetM: number
@@ -72,6 +73,7 @@ export function MapView({
   selectedId: string | null
   onSelect: (id: string) => void
   className?: string
+  compact?: boolean
 }) {
   const [tileErrors, setTileErrors] = useState(0)
   const selected = useMemo(() => sites.find((s) => s.site.id === selectedId)?.site ?? null, [sites, selectedId])
@@ -85,7 +87,7 @@ export function MapView({
           className="amp-dark-tiles"
           eventHandlers={{ tileerror: () => setTileErrors((n) => n + 1), tileload: () => setTileErrors(0) }}
         />
-        <FitView origin={origin} sites={sites} budgetM={budgetM} />
+        <FitView origin={origin} sites={sites} budgetM={budgetM} compact={compact} />
         <FlyTo target={selected ? { lat: selected.lat, lng: selected.lng } : null} />
         {budgetM > 0 ? (
           <Circle center={[origin.lat, origin.lng]} radius={budgetM} interactive={false} pathOptions={{ color: '#2563eb', weight: 1.5, dashArray: '6 8', fillColor: '#2563eb', fillOpacity: 0.05 }} />

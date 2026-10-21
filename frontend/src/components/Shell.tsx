@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, ChevronLeft, House, Inbox, LayoutGrid, ListChecks, Map as MapIcon, Search, Settings, Store, Terminal, Wallet } from 'lucide-react'
+import { Bell, CalendarDays, ChevronLeft, House, Inbox, LayoutGrid, ListChecks, Map as MapIcon, Search, Settings, Store, Terminal, UserRound, Wallet } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import type { User } from '../domain/types'
@@ -81,7 +81,7 @@ function navFor(u: User): { items: NavItem[]; fab: NavItem } {
 
 export function Shell({ user, children }: { user: User; children: ReactNode }) {
   const { pathname } = useLocation()
-  const { items, fab } = navFor(user)
+  const { items } = navFor(user)
   const dark = pathname.startsWith('/discover') || pathname.startsWith('/jury')
   const { unread } = useNotifications(user)
   return (
@@ -160,8 +160,8 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <Link to={fab.to} aria-label={fab.label} className={cn('grid size-[60px] shrink-0 place-items-center rounded-full shadow-float transition active:scale-95', dark ? 'bg-surface text-ink' : 'bg-volt text-white')}>
-          {fab.icon}
+        <Link to="/settings" aria-label="Profile and settings" className={cn('grid size-[60px] shrink-0 place-items-center rounded-full shadow-float transition active:scale-95', dark ? 'bg-surface text-ink' : 'bg-volt text-white')}>
+          <UserRound className="size-5" />
         </Link>
       </div>
     </div>
