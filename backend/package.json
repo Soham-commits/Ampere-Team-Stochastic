@@ -5,6 +5,8 @@
   "type": "module",
   "description": "Ampere server: Postgres-backed booking events, jury console and realtime, reusing the app's domain and service code.",
   "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts",
     "migrate": "tsx src/migrate.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

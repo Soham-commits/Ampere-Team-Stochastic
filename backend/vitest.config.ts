@@ -6,6 +6,6 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 30_000,
-    env: { DATABASE_URL: process.env.TEST_DATABASE_URL ?? 'postgres://localhost:5432/ampere_test' },
+    env: { DATABASE_URL: process.env.TEST_DATABASE_URL ?? 'postgres://localhost:5432/ampere_test', TOKEN_SECRET: 'test-secret' },
   },
 })
