@@ -22,6 +22,10 @@ export function client(server: TestServer, userId: string | null) {
       const res = await server.app.request('/api/console', { method: 'POST', headers, body: JSON.stringify({ line, command_id }) })
       return res.json() as Promise<{ ok: boolean; lines: { text: string }[]; booking_id?: string; booking_ref?: string; next_command?: string }>
     },
+    async snapshot() {
+      const res = await server.app.request('/api/snapshot', { headers })
+      return res.json()
+    },
   }
 }
 
