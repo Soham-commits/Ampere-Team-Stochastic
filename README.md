@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ Ampere
+#  Ampere
 
 **One app to find EV charging.**
 
@@ -40,26 +40,37 @@ Everything runs in the browser. The server, database and realtime channel are si
 
 ## Getting started
 
-### Charging app
+One command from the repository root runs the whole product. The landing page and the charging app are served by the same Vite process on the same port, and the landing page's "Try Ampere Demo" buttons open the app (`/app/?demo=driver`).
+
+```bash
+npm install        # from the repository root; frontend/ dependencies are installed automatically on first run
+npm run dev        # starts everything
+```
+
+| URL | What you get |
+| --- | --- |
+| http://localhost:5173/ | Landing page |
+| http://localhost:5173/app/ | Charging app (hot reload) |
+
+To check the production build, which writes the landing page to `dist/` and the app to `dist/app/`:
+
+```bash
+npm run build
+npm run preview    # http://localhost:4173 (app at http://localhost:4173/app/)
+```
+
+### Working on the charging app alone
+
+Only needed if you want the app on its own, served from `/`:
 
 ```bash
 cd frontend
 npm install
 npm run dev        # http://localhost:5173
 npm test           # domain and flow tests (vitest)
-npm run build && npm run preview   # production build with service worker
 ```
 
-### Landing page
-
-```bash
-npm install        # from the repository root
-npm run dev        # http://localhost:5173
-npm run build
-npm run preview    # http://localhost:4173
-```
-
-Both dev servers default to port 5173, so run one at a time or pass a different port.
+Stop the root dev server first, or pass `-- --port <n>`, because both use port 5173.
 
 ## Quick demo walkthrough
 
