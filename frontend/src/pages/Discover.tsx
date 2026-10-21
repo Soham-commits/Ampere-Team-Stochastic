@@ -1,8 +1,9 @@
-import { ChevronRight, List, LocateFixed, Map as MapIcon, MapPin, Navigation, Search, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronRight, Clock3, Zap, List, LocateFixed, Map as MapIcon, MapPin, Navigation, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMediaQuery, useNow, useQuery, useSession } from '../app/hooks'
-import { SITE_TYPE_LABEL, StationArt, StatusLine, siteIcon } from '../components/booking'
+import { SITE_TYPE_LABEL, StatusLine } from '../components/booking'
+import { ChargingBayPlan } from '../components/ChargingBayPlan'
 import { MapView, type MapSite } from '../components/MapView'
 import { Button, Card, Chip, EmptyState, Field, IconButton, inputClass, Notice, Range, Segmented, Sheet, Skeleton } from '../components/ui'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
@@ -10,6 +11,7 @@ import { DEMO_ORIGIN, PRESET_AREAS } from '../domain/policy'
 import type { ConnectorStandard, SiteType } from '../domain/types'
 import { cn } from '../lib/cn'
 import { istDayLabel, istTime, km, rupees } from '../lib/format'
+import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
 import { readDb } from '../server/db'
 import type { SearchResult } from '../server/discovery'
@@ -232,9 +234,10 @@ export default function Discover() {
     )
 
   return (
-    <div className="fixed inset-0 bg-night">
+    <div className="fixed inset-0 bg-[#eef2f7]">
       {map}
-      <div className="pt-safe absolute inset-x-0 top-0 z-[600] space-y-2 px-4 pt-4">
+      <div className="pt-safe absolute inset-x-0 top-0 z-[600] space-y-2 bg-gradient-to-b from-white/95 to-transparent px-4 pb-4 pt-4">
+        <h1 className="mb-3 max-w-[calc(100%-112px)] text-[clamp(1.5rem,7vw,2rem)] font-medium leading-[1.05] tracking-tight text-[#102455]">Find your next <span className="text-volt">charge.</span></h1>
         {topBar}
         {summary}
       </div>
@@ -265,40 +268,40 @@ function connectorsLine(g: SearchResult[]) {
   return [...seen.entries()].map(([k, v]) => `${k} ${v} kW`)
 }
 
+function StationPhoto({ siteId }: { siteId: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-[1.25rem] bg-surface-2">
+      <img src={stationImage(siteId)} alt="Illustrative white SUV at a charging location" loading="lazy" className="aspect-[2.15] w-full object-cover" />
+      <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-[9px] font-medium text-ink-2">Illustrative demo image</span>
+    </div>
+  )
+}
+
 function ResultCard({ group, now, selected, onSelect }: { group: SearchResult[]; now: number; selected: boolean; onSelect: () => void }) {
   const r = group[0]
   const reservable = group.some((x) => x.reservable)
   const next = group.map((x) => x.next_slot).filter(Boolean).sort()[0]
   return (
-    <Card className={cn('cursor-pointer transition hover:shadow-float', selected && 'ring-2 ring-ink')} onClick={onSelect}>
-      <div className="flex gap-3">
-        <StationArt type={r.site.site_type} className="h-24 w-24 shrink-0 !rounded-2xl" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="truncate font-semibold">{r.site.name}</div>
-              <div className="flex items-center gap-1 truncate text-xs text-muted">
-                {siteIcon(r.site.site_type, 'size-3')} {SITE_TYPE_LABEL[r.site.site_type]} · {r.site.public_area}
-              </div>
-            </div>
-            {!reservable ? <Chip tone="amber">Directory</Chip> : null}
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Chip icon={<Navigation className="size-3" />}>{km(r.route.distance_m)} road</Chip>
-            {connectorsLine(group).map((c) => (
-              <Chip key={c}>{c}</Chip>
-            ))}
-            {r.price_paise_per_kwh ? <Chip>{rupees(r.price_paise_per_kwh)}/kWh</Chip> : null}
-          </div>
-          <div className="mt-2">
-            <StatusLine value={r.status.value} source={r.status.source} observedAt={r.status.observed_at} freshness={r.status.freshness} now={now} />
-          </div>
+    <Card className={cn('!rounded-[2rem] !p-3.5 transition hover:shadow-float sm:!p-4', selected && 'ring-2 ring-volt')} onClick={onSelect}>
+      <StationPhoto siteId={r.site.id} />
+      <div className="px-1 pb-1 pt-5">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-[clamp(1.5rem,6vw,1.85rem)] font-medium leading-[1.12] tracking-[-0.04em]">{r.site.name}</h2>
+          {!reservable ? <Chip tone="amber">Directory</Chip> : null}
         </div>
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
-        <span className="text-xs text-muted">{reservable ? (next ? `Next free slot ${istDayLabel(next, now)} ${istTime(next)}` : 'No free slot soon') : 'Operator handles access and payment'}</span>
-        <Link to={`/station/${r.site.id}${window.location.search}`} onClick={(e) => e.stopPropagation()} className="inline-flex h-9 items-center gap-1 rounded-full bg-ink px-4 text-sm font-semibold text-white">
-          {reservable ? 'Request slot' : 'Details'} <ChevronRight className="size-4" />
+        <p className="mt-2 text-xs leading-relaxed text-muted">{SITE_TYPE_LABEL[r.site.site_type]} · {r.site.public_area}{r.site.location_precision === 'APPROXIMATE' ? ' · approximate location' : ''}</p>
+        <div className="mt-3">
+          <StatusLine value={r.status.value} source={r.status.source} observedAt={r.status.observed_at} freshness={r.status.freshness} now={now} />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {r.price_paise_per_kwh ? <Chip icon={<Zap className="size-3" />}>{rupees(r.price_paise_per_kwh)}/kWh</Chip> : null}
+          <Chip icon={<Clock3 className="size-3" />}>{Math.round(r.route.duration_s / 60)} min</Chip>
+          <Chip icon={<Navigation className="size-3" />}>{km(r.route.distance_m)} road</Chip>
+        </div>
+        <p className="mt-2.5 text-[11px] leading-relaxed text-ink-2">{connectorsLine(group).join(' · ')}</p>
+        <p className="mt-5 text-[11px] leading-relaxed text-muted">{reservable ? (next ? `Next free slot · ${istDayLabel(next, now)} ${istTime(next)}` : 'No free slot soon') : 'Operator handles access and payment'}</p>
+        <Link to={`/station/${r.site.id}${window.location.search}`} onClick={(e) => e.stopPropagation()} className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-volt px-4 text-sm font-semibold text-white transition hover:bg-volt-strong active:scale-[0.99]">
+          {reservable ? 'Request slot' : 'See operator details'} <Navigation className="size-4" />
         </Link>
       </div>
     </Card>
@@ -308,40 +311,19 @@ function ResultCard({ group, now, selected, onSelect }: { group: SearchResult[];
 function SelectedCard({ group, now, onClose }: { group: SearchResult[]; now: number; onClose: () => void }) {
   const r = group[0]
   const reservable = group.some((x) => x.reservable)
+  const bays = [...new Map(group.map((x) => [x.resource_id, { id: x.resource_id, label: x.resource_label, selectable: x.reservable && !!x.next_slot, note: x.reservable ? x.next_slot ? `Next ${istDayLabel(x.next_slot, now)} ${istTime(x.next_slot)}` : 'No upcoming slot' : 'Operator managed' }])).values()]
   return (
-    <div className="animate-fade-up rounded-[28px] bg-surface p-3 shadow-float">
-      <div className="relative">
-        <StationArt type={r.site.site_type} className="h-36 w-full" />
-        <button onClick={onClose} aria-label="Close" className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-surface/90 shadow-soft">
-          <X className="size-4" />
-        </button>
-        <span className="absolute left-2 top-2">
-          <Chip tone="outline" className="bg-surface/90">
-            Demo listing
-          </Chip>
-        </span>
+    <div className="animate-fade-up relative max-h-[65dvh] overflow-y-auto rounded-[2rem] bg-volt p-4 text-white shadow-float">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="rounded-full bg-white/15 px-3 py-1.5 text-[11px]">{bays.length} eligible {bays.length === 1 ? 'bay' : 'bays'} · {km(r.route.distance_m)} road</span>
+        <button onClick={onClose} aria-label="Close station preview" className="grid size-9 place-items-center rounded-full bg-white/15"><X className="size-4" /></button>
       </div>
-      <div className="px-2 pb-1 pt-3">
-        <h2 className="text-2xl font-medium tracking-tight">{r.site.name}</h2>
-        <div className="mt-0.5 text-sm text-muted">
-          {r.site.public_area}
-          {r.site.location_precision === 'APPROXIMATE' ? ' · exact address after confirmation' : ''}
-        </div>
-        <div className="mt-2">
-          <StatusLine value={r.status.value} source={r.status.source} observedAt={r.status.observed_at} freshness={r.status.freshness} now={now} />
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {r.price_paise_per_kwh ? <Chip>{rupees(r.price_paise_per_kwh)}/kWh</Chip> : null}
-          <Chip>{Math.round(r.route.duration_s / 60)} min</Chip>
-          <Chip>{km(r.route.distance_m)}</Chip>
-          {connectorsLine(group).map((c) => (
-            <Chip key={c}>{c}</Chip>
-          ))}
-        </div>
-        <Link to={`/station/${r.site.id}${window.location.search}`} className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-ink font-semibold text-white">
-          {reservable ? 'Request a slot' : 'See operator details'} <Navigation className="size-4" />
-        </Link>
+      <ChargingBayPlan bays={bays} />
+      <div className="mt-4 flex items-center gap-3">
+        <div className="min-w-0 flex-1"><h2 className="text-xl font-medium leading-tight tracking-tight">{r.site.name}</h2><p className="mt-1 text-xs text-white/75">{r.site.public_area}</p><p className="mt-2 text-[11px] text-white/85">{r.price_paise_per_kwh ? `${rupees(r.price_paise_per_kwh)}/kWh · ` : ''}{connectorsLine(group).join(' · ')}</p></div>
+        <Link to={`/station/${r.site.id}${window.location.search}`} aria-label={reservable ? `Choose a charging bay at ${r.site.name}` : `See operator details for ${r.site.name}`} className="grid size-14 shrink-0 place-items-center rounded-full border-4 border-white/30 bg-white text-volt"><Navigation className="size-5" /></Link>
       </div>
+      <p className="mt-3 text-[10px] text-white/70">Demo layout · {r.status.freshness === 'STALE' ? 'status is stale; request a future slot' : r.status.freshness === 'UNKNOWN' ? 'live status unknown' : 'host confirmation required'}</p>
     </div>
   )
 }
@@ -377,9 +359,9 @@ function LocationSheet({ open, onClose, onPick }: { open: boolean; onClose: () =
         {PRESET_AREAS.map((a) => (
           <button key={a.label} onClick={() => onPick(a)} className="flex w-full items-center gap-3 rounded-2xl bg-surface-2 p-3 text-left hover:bg-line">
             <MapPin className="size-4 text-muted" />
-            <span className="flex-1 text-sm font-semibold">{a.label}</span>
-            <span className="font-mono text-xs text-muted">
-              {a.lat.toFixed(4)}, {a.lng.toFixed(4)}
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">{a.label}</span>
+              <span className="mt-1 block font-mono text-[11px] text-muted">{a.lat.toFixed(4)}, {a.lng.toFixed(4)}</span>
             </span>
           </button>
         ))}

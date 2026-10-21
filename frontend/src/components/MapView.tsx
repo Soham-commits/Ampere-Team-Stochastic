@@ -1,4 +1,5 @@
 import L from 'leaflet'
+import { Minus, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Circle, MapContainer, Marker, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import type { LatLng } from '../domain/types'
@@ -36,7 +37,7 @@ function FitView({ origin, sites, budgetM, compact }: { origin: LatLng; sites: M
       const bounds = L.latLngBounds(pts)
       // With no pins, show the (illustrative) budget ring instead, capped to keep the view local.
       if (!sites.length && budgetM > 0) bounds.extend(L.latLng(origin.lat, origin.lng).toBounds(Math.min(budgetM, 6000) * 2))
-      map.fitBounds(bounds.pad(0.15), { paddingTopLeft: [24, compact ? 60 : 140], paddingBottomRight: [24, compact ? 45 : 200], maxZoom: 15 })
+      map.fitBounds(bounds.pad(0.15), { paddingTopLeft: [24, compact ? 60 : 190], paddingBottomRight: [24, compact ? 45 : 200], maxZoom: 15 })
     }
     const raf = requestAnimationFrame(fit)
     const ro = new ResizeObserver(() => fit())
@@ -50,12 +51,24 @@ function FitView({ origin, sites, budgetM, compact }: { origin: LatLng; sites: M
   return null
 }
 
-function FlyTo({ target }: { target: LatLng | null }) {
+function FlyTo({ target, compact }: { target: LatLng | null; compact: boolean }) {
   const map = useMap()
   useEffect(() => {
-    if (target) map.flyTo([target.lat, target.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })
-  }, [target, map])
+    if (target) {
+      const zoom = Math.max(map.getZoom(), 14)
+      const center = compact ? L.latLng(target.lat, target.lng) : map.unproject(map.project([target.lat, target.lng], zoom).add([0, map.getSize().y * 0.18]), zoom)
+      map.flyTo(center, zoom, { duration: 0.6 })
+    }
+  }, [target, map, compact])
   return null
+}
+
+function MapZoomControls() {
+  const map = useMap()
+  return <div className="absolute right-4 top-4 z-[650] flex gap-2" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+    <button type="button" aria-label="Zoom in" onClick={() => map.zoomIn()} className="grid size-11 place-items-center rounded-full bg-white text-[#102455] shadow-soft"><Plus className="size-5" /></button>
+    <button type="button" aria-label="Zoom out" onClick={() => map.zoomOut()} className="grid size-11 place-items-center rounded-full bg-white text-[#102455] shadow-soft"><Minus className="size-5" /></button>
+  </div>
 }
 
 export function MapView({
@@ -79,18 +92,18 @@ export function MapView({
   const selected = useMemo(() => sites.find((s) => s.site.id === selectedId)?.site ?? null, [sites, selectedId])
   return (
     <div className={className}>
-      <MapContainer center={[origin.lat, origin.lng]} zoom={14} zoomControl={false} attributionControl className="h-full w-full" style={{ background: '#161716' }}>
+      <MapContainer center={[origin.lat, origin.lng]} zoom={14} zoomControl={false} attributionControl className="h-full w-full" style={{ background: '#eef2f7' }}>
         <TileLayer
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           maxZoom={19}
-          className="amp-dark-tiles"
           eventHandlers={{ tileerror: () => setTileErrors((n) => n + 1), tileload: () => setTileErrors(0) }}
         />
         <FitView origin={origin} sites={sites} budgetM={budgetM} compact={compact} />
-        <FlyTo target={selected ? { lat: selected.lat, lng: selected.lng } : null} />
+        <FlyTo target={selected ? { lat: selected.lat, lng: selected.lng } : null} compact={compact} />
+        {!compact ? <MapZoomControls /> : null}
         {budgetM > 0 ? (
-          <Circle center={[origin.lat, origin.lng]} radius={budgetM} interactive={false} pathOptions={{ color: '#2563eb', weight: 1.5, dashArray: '6 8', fillColor: '#2563eb', fillOpacity: 0.05 }} />
+          <Circle center={[origin.lat, origin.lng]} radius={budgetM} interactive={false} pathOptions={{ color: '#3560cf', weight: 1.5, dashArray: '6 8', fillColor: '#3560cf', fillOpacity: 0.05 }} />
         ) : null}
         <Marker position={[origin.lat, origin.lng]} icon={originIcon} keyboard={false}>
           <Tooltip className="amp-tip" direction="top" offset={[0, -10]}>

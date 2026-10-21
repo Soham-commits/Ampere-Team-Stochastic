@@ -1,8 +1,11 @@
-import { Accessibility, CalendarClock, Clock, Info, Minus, Plus, ShieldCheck, Zap } from 'lucide-react'
+import { Accessibility, CalendarClock, Clock, Info, ShieldCheck, Zap } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useNow, useQuery, useSession } from '../app/hooks'
-import { SITE_TYPE_LABEL, StationArt, StatusLine, siteIcon } from '../components/booking'
+import { SITE_TYPE_LABEL, StatusLine, siteIcon } from '../components/booking'
+import { ChargingBayPlan } from '../components/ChargingBayPlan'
+import { DurationDial } from '../components/DurationDial'
+import { slotProblem } from '../server/availability'
 import { Page, PageHeader } from '../components/Shell'
 import { Button, Card, Chip, EmptyState, Notice, Range, SectionTitle, Segmented, Skeleton, useAction } from '../components/ui'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
@@ -11,6 +14,7 @@ import type { ConnectorStandard, Plan } from '../domain/types'
 import { cn } from '../lib/cn'
 import { countdown, istTime, km, kwh, minutes, rupees } from '../lib/format'
 import { uuid } from '../lib/ids'
+import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
 import type { Quote } from '../server/db'
 import { readDb } from '../server/db'
@@ -118,8 +122,24 @@ export default function Station() {
       <Page>
         <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-8">
           <div>
-            <div className="relative">
-              <StationArt type={site.site_type} className="h-48 w-full sm:h-64" />
+            {!directory ? (
+              <>
+                <div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-lg font-medium">Choose your charging bay</h2><span className="text-xs text-muted">{detail.data.resources.length} {detail.data.resources.length === 1 ? 'bay' : 'bays'}</span></div>
+                <ChargingBayPlan bays={detail.data.resources.map((r) => {
+                  const compatible = options.some((o) => o.resource_id === r.id)
+                  const problem = start ? slotProblem(r.id, Date.parse(start), Date.parse(start) + duration * 60_000, now) : null
+                  return { id: r.id, label: r.label, selectable: compatible && !problem, note: !compatible ? 'Not eligible for your car' : problem === 'SLOT_UNAVAILABLE' ? 'Reserved for this time' : problem ? 'Pick a different time' : start ? 'Free for selected time' : 'Choose a start time' }
+                })} selectedId={conn?.resource_id} onSelect={(id) => { const option = options.find((o) => o.resource_id === id); if (option) setConnectorId(option.id) }} />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {options.filter((o) => o.resource_id === conn?.resource_id).map((o) => <button key={o.id} aria-pressed={o.id === conn?.id} onClick={() => setConnectorId(o.id)} className={cn('rounded-full px-4 py-2 text-xs font-medium', o.id === conn?.id ? 'bg-surface text-ink' : 'border border-line text-ink-2')}>{CONNECTOR_LABEL[o.standard]} · {o.effective_power_kw} kW</button>)}
+                </div>
+                <p className="mt-3 text-[11px] text-muted">Availability is for your chosen time. Host confirmation is still required.</p>
+              </>
+            ) : null}
+            <details className="mt-5 rounded-3xl border border-line p-4">
+              <summary className="cursor-pointer text-sm font-medium">About this charger & connector details</summary>
+            <div className="relative mt-4">
+              <img src={stationImage(site.id)} alt="Illustrative white SUV at a charging location" className="h-48 w-full rounded-[var(--radius-card)] object-cover sm:h-64" />
               <div className="absolute left-3 top-3 flex gap-1.5">
                 <Chip tone="outline" className="bg-surface/90">Demo listing</Chip>
                 {site.location_precision === 'APPROXIMATE' ? <Chip tone="outline" className="bg-surface/90">Approximate area</Chip> : null}
@@ -209,26 +229,18 @@ export default function Station() {
               )}
             </div>
             <p className="mt-2 text-xs text-muted">Approval means synthetic evidence was reviewed — not a guarantee against failure.</p>
+            </details>
           </div>
 
           {options.length ? (
             <div className="lg:sticky lg:top-8 lg:self-start">
-              <SectionTitle className="lg:mt-0">Request a slot</SectionTitle>
+              <SectionTitle className="lg:mt-0">Plan your charge</SectionTitle>
               <Card className="space-y-5">
                 <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-ink-2">Duration</span>
-                    <div className="flex items-center gap-2">
-                      <button aria-label="Shorter" onClick={() => setDuration((d) => Math.max(POLICY.min_booking_min, d - 15))} className="grid size-9 place-items-center rounded-full bg-surface-2">
-                        <Minus className="size-4" />
-                      </button>
-                      <span className="w-16 text-center font-semibold tabular-nums">{duration} min</span>
-                      <button aria-label="Longer" onClick={() => setDuration((d) => Math.min(POLICY.max_booking_min, d + 15))} className="grid size-9 place-items-center rounded-full bg-surface-2">
-                        <Plus className="size-4" />
-                      </button>
-                    </div>
-                  </div>
+                  <div className="mb-3 flex items-center justify-between"><span className="text-base font-medium">Charging duration</span><span className="text-xs text-muted">{conn?.resource_label}</span></div>
                   <Segmented size="sm" value={String(day) as '0' | '1'} onChange={(v) => setDay(Number(v) as 0 | 1)} options={[{ value: '0', label: 'Today' }, { value: '1', label: 'Tomorrow' }]} />
+                  <div className="mt-3"><DurationDial value={duration} onChange={setDuration} /></div>
+                  <p className="mt-4 text-xs font-medium text-ink-2">Choose your arrival time</p>
                   <div className="no-scrollbar -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
                     {(slots.data ?? []).map((t) => (
                       <button key={t} onClick={() => setStart(t)} className={cn('h-10 shrink-0 rounded-full px-3.5 text-sm font-semibold tabular-nums', start === t ? 'bg-ink text-white' : 'bg-surface-2 text-ink-2')}>
