@@ -25,6 +25,10 @@ export function arrivalCode() {
 }
 
 export async function sha256(text: string) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('')
+  const bytes = new TextEncoder().encode(text)
+  // LAN HTTP previews lack SubtleCrypto; keep the same SHA-256 token format.
+  const digest = globalThis.crypto?.subtle
+    ? new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
+    : (await import('@noble/hashes/sha2.js')).sha256(bytes)
+  return Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join('')
 }
