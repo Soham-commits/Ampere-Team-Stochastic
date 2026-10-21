@@ -1,0 +1,26 @@
+{
+  "name": "ampere-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Ampere server: Postgres-backed booking events, jury console and realtime, reusing the app's domain and service code.",
+  "scripts": {
+    "migrate": "tsx src/migrate.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.13",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.12"
+  }
+}
