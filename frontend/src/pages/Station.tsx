@@ -1,3 +1,4 @@
+import { SolarBadge } from '../features/solar/SolarBadge'
 import { Accessibility, CalendarClock, Clock, Info, ShieldCheck, Zap } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -120,6 +121,7 @@ export default function Station() {
     <>
       <PageHeader back title={site.name} subtitle={`${SITE_TYPE_LABEL[site.site_type]} · ${site.public_area}`} />
       <Page>
+        <div className="mb-3"><SolarBadge siteId={site.id} /></div>
         <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-8">
           <div>
             {!directory ? (

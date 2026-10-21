@@ -1,3 +1,4 @@
+import { SolarBadge } from '../features/solar/SolarBadge'
 import { ChevronRight, Clock3, Zap, List, LocateFixed, Map as MapIcon, MapPin, Navigation, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -286,6 +287,7 @@ function ResultCard({ group, now, selected, onSelect }: { group: SearchResult[];
       <StationPhoto siteId={r.site.id} />
       <div className="px-1 pb-1 pt-5">
         <div className="flex items-start justify-between gap-2">
+          <div className="mb-2"><SolarBadge siteId={r.site.id} /></div>
           <h2 className="text-[clamp(1.5rem,6vw,1.85rem)] font-medium leading-[1.12] tracking-[-0.04em]">{r.site.name}</h2>
           {!reservable ? <Chip tone="amber">Directory</Chip> : null}
         </div>
