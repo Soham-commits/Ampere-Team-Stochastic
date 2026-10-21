@@ -7,6 +7,7 @@ import { bookings, handle, readDb, type User } from './engine'
 import { createRealtime } from './realtime'
 import { createMethods, runJury } from './rpc'
 import { snapshotFor } from './snapshot'
+import { serveWeb } from './static'
 import { connect, migrate, type Sql } from './store/pg'
 import { createPersistence, PersistenceError } from './store/persist'
 
@@ -69,6 +70,8 @@ export async function createServer(opts: { databaseUrl?: string; worker?: boolea
     }
     return c.json(result)
   })
+
+  app.get('*', (c) => serveWeb(c.req.path))
 
   let worker: ReturnType<typeof setInterval> | undefined
   if (opts.worker !== false)
