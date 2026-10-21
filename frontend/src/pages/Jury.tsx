@@ -112,7 +112,7 @@ export default function Jury() {
   const notJury = !user.capabilities.includes('JURY')
 
   return (
-    <div className="min-h-dvh text-white">
+    <div className="min-h-dvh text-ink">
       <div className="pt-safe mx-auto max-w-6xl px-4 pb-36 pt-5 sm:px-6 lg:pb-10 lg:pt-8">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -121,11 +121,11 @@ export default function Jury() {
             </span>
             <div>
               <h1 className="text-xl font-semibold tracking-tight">Jury console</h1>
-              <div className="font-mono text-xs text-white/50">server {isoIst(now)}</div>
+              <div className="font-mono text-xs text-muted">server {isoIst(now)}</div>
             </div>
           </div>
           <div className="hidden sm:block">
-            <Logo dark />
+            <Logo />
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -141,7 +141,7 @@ export default function Jury() {
             <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3">
               <span className="size-3 rounded-full bg-[#ff5f57]" />
               <span className="size-3 rounded-full bg-[#febc2e]" />
-              <span className="size-3 rounded-full bg-[#3b82f6]" />
+              <span className="size-3 rounded-full bg-[#4b73db]" />
               <span className="ml-3 font-mono text-xs text-white/40">ampere://jury</span>
             </div>
             <div ref={scroller} className="h-[46dvh] overflow-y-auto px-4 py-3 font-mono text-[12.5px] leading-relaxed sm:h-[52dvh] lg:h-[60dvh]" role="log" aria-live="polite">

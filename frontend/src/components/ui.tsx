@@ -1,5 +1,6 @@
-import { AnimatePresence, motion } from 'motion/react'
-import { createContext, useCallback, useContext, useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { CircleAlert, Check, Info, X } from 'lucide-react'
 import { cn } from '../lib/cn'
 
@@ -154,7 +155,7 @@ export function EmptyState({ icon, title, children, action, className }: { icon?
 }
 
 export function Notice({ tone = 'neutral', title, children, icon, className, action }: { tone?: 'neutral' | 'volt' | 'amber' | 'danger'; title?: ReactNode; children?: ReactNode; icon?: ReactNode; className?: string; action?: ReactNode }) {
-  const t = { neutral: 'bg-surface-2 text-ink-2', volt: 'bg-volt-soft text-[#1d4ed8]', amber: 'bg-amber-soft text-[#6d4710]', danger: 'bg-danger-soft text-[#7d2c1b]' }[tone]
+  const t = { neutral: 'bg-surface-2 text-ink-2', volt: 'bg-volt-soft text-[#2345a1]', amber: 'bg-amber-soft text-[#6d4710]', danger: 'bg-danger-soft text-[#7d2c1b]' }[tone]
   return (
     <div className={cn('flex gap-3 rounded-2xl p-3.5 text-sm', t, className)} role={tone === 'danger' ? 'alert' : 'status'}>
       <div className="mt-0.5 shrink-0">{icon ?? (tone === 'danger' || tone === 'amber' ? <CircleAlert className="size-4" /> : <Info className="size-4" />)}</div>
@@ -219,36 +220,66 @@ export function Range({ value, min, max, step = 1, onChange, label, className }:
 /* ---------------- Sheet ---------------- */
 
 export function Sheet({ open, onClose, title, children, className }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode; className?: string }) {
+  const reduceMotion = useReducedMotion()
+  const titleId = useId()
+  const panel = useRef<HTMLDivElement>(null)
+  const close = useRef(onClose)
+  useEffect(() => { close.current = onClose }, [onClose])
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const previousFocus = document.activeElement as HTMLElement | null
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    panel.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close.current()
+      if (e.key !== 'Tab') return
+      const controls = Array.from(panel.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select, textarea, [tabindex="0"]') ?? []).filter((el) => el.getClientRects().length)
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (!first) { e.preventDefault(); return }
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === panel.current)) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && (document.activeElement === last || document.activeElement === panel.current)) { e.preventDefault(); first.focus() }
+    }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
-  return (
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKey)
+      previousFocus?.focus()
+    }
+  }, [open])
+  return createPortal(
     <AnimatePresence>
       {open ? (
-        <div className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
-          <motion.div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+        <div className="sheet-overlay fixed inset-0 z-[1000] flex items-end justify-center sm:items-center">
+          <motion.div className="absolute inset-0 bg-black/35 backdrop-blur-[3px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reduceMotion ? 0 : 0.3 }} onClick={onClose} aria-hidden="true" />
           <motion.div
-            initial={{ y: 40, opacity: 0 }}
+            ref={panel}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            aria-label={title ? undefined : 'Dialog'}
+            tabIndex={-1}
+            initial={{ y: reduceMotion ? 0 : 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 360 }}
-            className={cn('pb-safe relative max-h-[90dvh] w-full overflow-y-auto rounded-t-[28px] bg-surface p-5 shadow-float sm:max-w-lg sm:rounded-[28px]', className)}
+            exit={{ y: reduceMotion ? 0 : 48, opacity: 0, transition: { duration: reduceMotion ? 0 : 0.25 } }}
+            transition={{ duration: reduceMotion ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className={cn('sheet-panel relative flex w-full min-w-0 max-w-lg flex-col overflow-hidden rounded-[28px] bg-surface shadow-float outline-none', className)}
           >
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" />
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="text-lg font-semibold">{title}</div>
-              <button onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-surface-2 hover:bg-line">
-                <X className="size-4" />
-              </button>
+            <div className="shrink-0 px-5 pt-3">
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line sm:hidden" />
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div id={titleId} className="min-w-0 text-lg font-semibold">{title}</div>
+                <button onClick={onClose} aria-label="Close" className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-2 hover:bg-line">
+                  <X className="size-4" />
+                </button>
+              </div>
             </div>
-            {children}
+            <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 [overflow-wrap:anywhere]">{children}</div>
           </motion.div>
         </div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>, document.body,
   )
 }
 
