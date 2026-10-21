@@ -20,12 +20,13 @@ The full product thinking lives in the [Ampere Product Solution Document](Ampere
 
 ## Repository layout
 
-Ampere ships as a single web app: the landing page is served at `/` and the charging app at `/app/`, both from one Vite project and one dev server.
+Ampere ships as a single web app: the landing page is served at `/` and the charging app at `/app/`, both from one Vite project and one dev server. A separate Node server in `backend/` can serve the same app against Postgres.
 
 | Path | What it is | Stack |
 | --- | --- | --- |
 | [`/`](package.json) (`src/`, `index.html`, `public/`, `vite.config.js`) | Landing page with scroll animation and a phone-mockup hero. Its Vite config also mounts the charging app at `/app/` | Vite, GSAP, Lenis |
 | [`frontend/`](frontend/README.md) | The charging app, an installable front-end PWA that opens from the landing page | React 19, TypeScript, Tailwind CSS 4, Leaflet, Vite, Vitest |
+| [`backend/`](backend/README.md) | Server for the app: Postgres booking events, jury console, realtime, real public chargers | Node, Hono, PostgreSQL, Vitest |
 
 ## Key features (charging app)
 
@@ -36,7 +37,7 @@ Ampere ships as a single web app: the landing page is served at `/` and the char
 - **Jury Console.** A plain-text console that accepts `TICKET` and `READY` commands and writes through the same booking services as the app.
 - **Installable PWA** with a service worker.
 
-Everything runs in the browser. The server, database and realtime channel are simulated in `frontend/src/server/` using `localStorage`, Web Locks and a `BroadcastChannel`.
+By default everything runs in the browser: the server, database and realtime channel are simulated in `frontend/src/server/` using `localStorage`, Web Locks and a `BroadcastChannel`. The [`backend/`](backend/README.md) server runs the same app, unchanged, against PostgreSQL, so bookings persist across devices, cleared browsers and restarts.
 
 ## Getting started
 
@@ -90,12 +91,13 @@ See [`frontend/README.md`](frontend/README.md) for the architecture table and kn
 
 ## Honest limits
 
-- Synthetic listings only. Real-world verified records are not yet included.
+- Community listings are synthetic. The backend adds real public chargers from Open Charge Map as non-reservable directory listings.
 - Map tiles come from the public OpenStreetMap tile server, which is suitable for demos only.
-- Data lives in the browser's storage, so tabs of one browser share it but separate devices do not.
+- Without the backend, data lives in the browser's storage, so tabs of one browser share it but separate devices do not.
 - The 4% battery scenario demonstrates careful filtering. It is not a rescue guarantee.
 
 ## Documentation
 
 - [Ampere Product Solution Document](Ampere_Solution_Document.md): product, operating model, pricing assumptions and pilot plan.
 - [Charging app README](frontend/README.md): run instructions, demo script and architecture.
+- [Server README](backend/README.md): running the app against PostgreSQL, real charger data and the jury proof.
