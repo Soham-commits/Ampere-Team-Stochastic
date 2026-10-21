@@ -179,6 +179,8 @@ export async function resetDemo() {
   })
   const { seedDemoBookings } = await import('./seed')
   await seedDemoBookings()
+  const { seedDriverDemoBookings } = await import('./seed')
+  await seedDriverDemoBookings()
   publish({ kind: 'reset' })
 }
 
@@ -189,6 +191,8 @@ export async function ensureSeeded() {
     const { seedDemoBookings } = await import('./seed')
     await seedDemoBookings()
   }
+  const { seedDriverDemoBookings } = await import('./seed')
+  await seedDriverDemoBookings()
 }
 
 // Invalidate the parsed cache when another tab changes the db.
