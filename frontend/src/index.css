@@ -203,6 +203,11 @@ h1, h2, h3, h4 {
   background-image: var(--app-gradient);
 }
 .bg-volt:hover { background-color: var(--color-volt-strong); }
+/* Keep interactive actions solid blue while retaining decorative gradients. */
+button.bg-volt,
+a.bg-volt {
+  background-image: none;
+}
 .driver-home { padding-bottom: 3rem; }
 @media (max-width: 1023px) {
   .home-scroll-area {
