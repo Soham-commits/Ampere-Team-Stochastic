@@ -11,7 +11,8 @@
     "build:web": "node scripts/build-web.mjs",
     "dev:web": "node scripts/dev-web.mjs",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "import:chargers": "tsx src/seed/importRealChargers.ts"
   },
   "engines": {
     "node": ">=22"

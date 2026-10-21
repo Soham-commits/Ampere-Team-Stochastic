@@ -19,7 +19,8 @@ export class PersistenceError extends Error {}
 
 const tick = () => new Promise<void>((r) => setImmediate(r))
 
-export function createPersistence(sql: Sql) {
+/** opts.seed adds idempotent reference data after the demo fixtures, on every boot and reset. */
+export function createPersistence(sql: Sql, opts: { seed?: () => Promise<unknown> } = {}) {
   let pending: BookingEvent[] = []
   let docDirty = false
   let quietDepth = 0
@@ -133,20 +134,27 @@ export function createPersistence(sql: Sql) {
     boot: () =>
       exclusive(async () => {
         if (!(await loadIntoMemory())) {
-          await quiet(() => resetDemo())
+          await quiet(async () => {
+            await resetDemo()
+            await opts.seed?.()
+          })
           await writeAll()
           console.log('[ampere] empty database: seeded a fresh demo')
         }
       }).then(async () => {
-        // Idempotent top-ups (extra demo sites, driver examples) go through the normal write path.
+        // Idempotent top-ups (extra demo sites, driver examples, reference data) go through the normal write path.
         await seedDriverDemoBookings()
+        await opts.seed?.()
         await barrier()
       }),
 
     /** Demo reset: reseed memory, then replace the database wholesale. */
     reset: () =>
       exclusive(async () => {
-        await quiet(() => resetDemo())
+        await quiet(async () => {
+          await resetDemo()
+          await opts.seed?.()
+        })
         await writeAll()
         notify({ events: [], docChanged: true, reset: true })
       }),

@@ -1,0 +1,371 @@
+{
+  "source": "Open Charge Map (https://openchargemap.org)",
+  "licence": "CC BY 4.0",
+  "retrieved_at": "2026-10-21T19:22:09.435Z",
+  "origin": {
+    "lat": 18.5362,
+    "lng": 73.8939,
+    "label": "Koregaon Park, Pune (demo origin)"
+  },
+  "routing": "OSRM driving route (router.project-osrm.org)",
+  "chargers": [
+    {
+      "ocm_id": 485113,
+      "name": "Panchjanya Automobiles",
+      "area": "Shivane, Pune",
+      "address": "N H 48 Service Road, Warje, Shivane, Pune",
+      "lat": 18.482695102792377,
+      "lng": 73.80274365086417,
+      "operator": "Tata Power",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 60,
+          "quantity": 1
+        }
+      ],
+      "road_distance_m": 14268,
+      "verified_at": "2026-04-10T14:43:00Z"
+    },
+    {
+      "ocm_id": 481494,
+      "name": "Amar Business Zone",
+      "area": "Baner, Pune",
+      "address": "Swati Park, Veerbhadra Nagar, Baner, Pune",
+      "lat": 18.56414082731241,
+      "lng": 73.77645742740673,
+      "operator": "JIO BP Pulse (India)",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 15066,
+      "verified_at": "2026-04-08T15:07:00Z"
+    },
+    {
+      "ocm_id": 481495,
+      "name": "Aditya School",
+      "area": "near Aditya English Medium School, Baner, Pune",
+      "address": "Aditya School, 20, Pancard Club Road, near Aditya English Medium School, Baner, Pune",
+      "lat": 18.56124353052958,
+      "lng": 73.7812056950576,
+      "operator": "Zeon Charging",
+      "usage": "Public - Membership Required",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 15256,
+      "verified_at": "2026-04-08T15:09:00Z"
+    },
+    {
+      "ocm_id": 481496,
+      "name": "Crystal Kia, Baner",
+      "area": "opposite Bitwise, Baner, Pune",
+      "address": "Axis Centra, Baner Road, opposite Bitwise, Baner, Pune",
+      "lat": 18.557345771328887,
+      "lng": 73.77053982274862,
+      "operator": "Tata Power",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 75,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 15867,
+      "verified_at": "2026-04-08T15:10:00Z"
+    },
+    {
+      "ocm_id": 481498,
+      "name": "Shell Recharge Sus Road",
+      "area": "Pune",
+      "address": "Sus Lane Sus, Pune",
+      "lat": 18.551668484658936,
+      "lng": 73.76101557363096,
+      "operator": "Shell Recharge (IN)",
+      "usage": "Public - Membership Required",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 16648,
+      "verified_at": "2026-04-08T15:13:00Z"
+    },
+    {
+      "ocm_id": 481497,
+      "name": "B4S Baner",
+      "area": "Baner, Pune",
+      "address": "Phase 01, Mohan Nagar, Survey No 36/1, GF, Tierra Viva Society, Baner, Pune",
+      "lat": 18.5534199309817,
+      "lng": 73.77066239419024,
+      "operator": "JIO BP Pulse (India)",
+      "usage": "Public - Membership Required",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 16710,
+      "verified_at": "2026-04-08T15:12:00Z"
+    },
+    {
+      "ocm_id": 481493,
+      "name": "Balewadi Charge Park",
+      "area": "Pune",
+      "address": "Balewadi, Pune",
+      "lat": 18.57893575826883,
+      "lng": 73.76250206523362,
+      "operator": "GO EC (IN)",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 17996,
+      "verified_at": "2026-04-08T15:05:00Z"
+    },
+    {
+      "ocm_id": 485112,
+      "name": "Nanded City",
+      "area": "Nanded, Pune",
+      "address": "Destination Center, Nanded City Sinhgad Road, Nanded, Pune",
+      "lat": 18.45952286506575,
+      "lng": 73.78559864482418,
+      "operator": "Chargezone (India)",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 1
+        },
+        {
+          "standard": "TYPE2",
+          "mode": "AC",
+          "power_kw": 7.4,
+          "quantity": 1
+        }
+      ],
+      "road_distance_m": 18664,
+      "verified_at": "2026-04-10T14:39:00Z"
+    },
+    {
+      "ocm_id": 481492,
+      "name": "Gaurav Icon Tower",
+      "area": "Pimpri-Chinchwad, Pune",
+      "address": "Shankar Kalat Nagar, Wakad, Pimpri-Chinchwad, Pune",
+      "lat": 18.59629964353062,
+      "lng": 73.75599935970514,
+      "operator": "Chargezone (India)",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 19606,
+      "verified_at": "2026-04-08T15:02:00Z"
+    },
+    {
+      "ocm_id": 481491,
+      "name": "MG Motor B.U. Bhandari Showroom",
+      "area": "Wakad, Pune",
+      "address": "Survey No 142, Hissa No 1/2/5 Mumbai Banglore Highway, Wakad, Pune",
+      "lat": 18.599012307937844,
+      "lng": 73.75415702984328,
+      "operator": "Statiq (IN)",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 19894,
+      "verified_at": "2026-04-08T15:00:00Z"
+    },
+    {
+      "ocm_id": 481488,
+      "name": "Garve Hyundai",
+      "area": "Wakad, Pimpri-Chinchwad, Pune",
+      "address": "S.No - 136/ 1, A/ 6, Pune - Mumbai Highway, Wakad, Pimpri-Chinchwad, Pune",
+      "lat": 18.59991835206595,
+      "lng": 73.7537161148497,
+      "operator": "Chargezone (India)",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 1
+        }
+      ],
+      "road_distance_m": 20032,
+      "verified_at": "2026-04-08T14:54:00Z"
+    },
+    {
+      "ocm_id": 481489,
+      "name": "Hotel Sayaji Wakad",
+      "area": "Wakad,Pimpri-Chinchwad, Pune",
+      "address": "135/136, Mumbai-Banglore Bypass Highway, Shankar Kalat Nagar, Wakad,Pimpri-Chinchwad, Pune",
+      "lat": 18.599090985407713,
+      "lng": 73.75190356008125,
+      "operator": "Tata Power",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 20120,
+      "verified_at": "2026-04-08T14:57:00Z"
+    },
+    {
+      "ocm_id": 480935,
+      "name": "Shell Tathawade",
+      "area": "Tathawade, Pimpri-Chinchwad, Pune",
+      "address": "T Mulshi, Bengaluru - Mumbai Highway, Vill,, Tathawade, Pimpri-Chinchwad, Pune",
+      "lat": 18.61358685499954,
+      "lng": 73.74883334321919,
+      "operator": "Shell Recharge (IN)",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 3
+        }
+      ],
+      "road_distance_m": 21615,
+      "verified_at": "2026-04-07T17:18:00Z"
+    },
+    {
+      "ocm_id": 480934,
+      "name": "Burger King, Tathawade",
+      "area": "Tathawade, Pune",
+      "address": "Survey No 81/7, Unit No 1, 81/8, Tathawade, Pune",
+      "lat": 18.61652961025573,
+      "lng": 73.74773834178781,
+      "operator": "Tata Power",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 25,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 21950,
+      "verified_at": "2026-04-07T17:15:00Z"
+    },
+    {
+      "ocm_id": 485111,
+      "name": "Datsons Electronics Pvt. Ltd",
+      "area": "Nearest Land-Mark - 3 km Far From Khadakwasla Dam Towards, Pune",
+      "address": "Gat.No.30, Sinhagad Road, Gorhe Budruk, Tal- Haveli Next To Savali Resort, Off Sinhagad Road, Village Gorhe, Nearest Land-Mark - 3 km Far From Khadakwasla Dam Towards, Pune",
+      "lat": 18.423345827831167,
+      "lng": 73.75486582515008,
+      "operator": "Tata Power",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 1
+        },
+        {
+          "standard": "TYPE2",
+          "mode": "AC",
+          "power_kw": 7.4,
+          "quantity": 1
+        },
+        {
+          "standard": "CHADEMO",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 1
+        }
+      ],
+      "road_distance_m": 23549,
+      "verified_at": "2026-04-10T14:32:00Z"
+    },
+    {
+      "ocm_id": 480932,
+      "name": "Sai Darbar Hotel",
+      "area": "Tathawade, Pimpri-Chinchwad, Pune",
+      "address": "Ashok Nagar, Tathawade Bearing Gate No-129/2B/1 At Village Tathawde, Taluka-Mulshi, Katraj-Dehu Road Bypass, Ashok Nagar, Tathawade, Pimpri-Chinchwad, Pune",
+      "lat": 18.623896266954958,
+      "lng": 73.74563734187849,
+      "operator": "Tata Power",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 30,
+          "quantity": 2
+        }
+      ],
+      "road_distance_m": 25399,
+      "verified_at": "2026-04-07T17:10:00Z"
+    },
+    {
+      "ocm_id": 480933,
+      "name": "Tata Motors Tathawade",
+      "area": "Tathawade , Pimpri-Chinchwad, Pune",
+      "address": "S No 129/23/1, near Mehendale Transformer, Ashok Nagar, , Tathawade , Pimpri-Chinchwad, Pune",
+      "lat": 18.623488205362765,
+      "lng": 73.74548104644525,
+      "operator": "Tata Power",
+      "usage": "Public",
+      "connectors": [
+        {
+          "standard": "CCS2",
+          "mode": "DC",
+          "power_kw": 25,
+          "quantity": 1
+        }
+      ],
+      "road_distance_m": 25406,
+      "verified_at": "2026-04-07T17:12:00Z"
+    }
+  ]
+}
