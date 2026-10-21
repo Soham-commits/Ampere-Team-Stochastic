@@ -9,8 +9,8 @@ serve({ fetch: server.app.fetch, port: config.port, hostname: '0.0.0.0' }, ({ po
   const lan = Object.values(networkInterfaces())
     .flat()
     .find((i) => i && i.family === 'IPv4' && !i.internal)?.address
-  console.log(`[ampere] API on http://localhost:${port}`)
-  if (lan) console.log(`[ampere] on your network: http://${lan}:${port}`)
+  console.log(`[ampere] API + web on http://localhost:${port}  (app: /app/)`)
+  if (lan) console.log(`[ampere] on your network: http://${lan}:${port}/app/`)
 })
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const)

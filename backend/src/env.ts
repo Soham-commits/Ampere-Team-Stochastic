@@ -20,6 +20,8 @@ export const config = {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
+  /** Built landing page + /app/ (node scripts/build-web.mjs). Served when present. */
+  webDir: process.env.WEB_DIR ?? new URL('../../dist', import.meta.url).pathname,
   workerIntervalMs: 2000,
 }
 
