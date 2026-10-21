@@ -961,41 +961,6 @@ a:hover .arrow-swap-inner { transform: translateX(0); }
 .faq-a p { max-width: 70%; padding: 0 1.4vw 1.6vw 1.5rem; color: rgba(255, 255, 255, 0.9); line-height: 1.6; }
 
 /* ==========================================================================
-   CTA
-   ========================================================================== */
-.cta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  height: 100vh;
-  width: 100%;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-inline: 5%;
-  background: #f5f5f5;
-  color: #000;
-  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
-}
-.cta.is-hot { background: var(--primary); color: #fff; }
-.cta-btn {
-  display: inline-flex;
-  width: 45vw;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: #000;
-  padding-block: 2.5vw;
-  color: #fff;
-  font-family: var(--font-heading);
-  font-size: 2.4vw;
-  letter-spacing: -0.02em;
-  --roll-hover: #fff;
-}
-.cta-btn .roll { line-height: 1.1; padding-top: 0.1em; }
-.cta p { margin-top: 2vw; text-align: center; }
-
-/* ==========================================================================
    Footer (fixed, revealed by the clip-path wrapper)
    ========================================================================== */
 .page { position: relative; z-index: 1; }
@@ -1195,11 +1160,6 @@ a:hover .arrow-swap-inner { transform: translateX(0); }
   .faq-icon { width: 5vw; height: 5vw; }
   .faq-a p { max-width: 100%; padding: 0 3vw 3vw; }
 
-  /* CTA */
-  .cta { height: 70vh; }
-  .cta-btn { width: 80vw; padding: 7vw 6vw; font-size: 5vw; }
-  .cta p { margin-top: 5vw; max-width: 62%; font-size: 2.9vw; }
-
   /* Footer: taller than the viewport here, so it scrolls in normally. */
   .footer-reveal { height: auto !important; clip-path: none; }
   .site-footer { position: relative; }
@@ -1319,9 +1279,6 @@ a:hover .arrow-swap-inner { transform: translateX(0); }
   .faq-q { font-size: 5vw; padding: 5vw; }
   .faq-icon { width: 8vw; height: 8vw; }
   .faq-a p { padding: 0 5vw 5vw; }
-
-  .cta-btn { width: 85vw; padding-block: 4vw; font-size: 7vw; }
-  .cta p { margin-top: 6vw; max-width: 72%; font-size: 4.2vw; }
 
   .footer-inner { padding-top: 16vw; }
   .footer-art { width: 72vw; }

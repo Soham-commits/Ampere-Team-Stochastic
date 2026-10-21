@@ -731,15 +731,8 @@ function initFaq() {
 }
 
 /* ------------------------------------------------------------------ */
-/* CTA hover flood + fixed footer reveal                               */
+/* Fixed footer reveal                                                 */
 /* ------------------------------------------------------------------ */
-
-function initCta() {
-  const cta = document.querySelector('[data-cta]');
-  const btn = document.querySelector('[data-cta-btn]');
-  btn.addEventListener('mouseenter', () => cta.classList.add('is-hot'));
-  btn.addEventListener('mouseleave', () => cta.classList.remove('is-hot'));
-}
 
 function initFooter() {
   const wrap = document.querySelector('[data-footer-reveal]');
@@ -784,7 +777,6 @@ function boot() {
   initStories();
   initResources();
   initFaq();
-  initCta();
   initFooter();
   initLineDraw();
   initFades();
