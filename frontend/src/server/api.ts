@@ -1,3 +1,4 @@
+import type { EquipmentChoice } from '../domain/equipment'
 /*
  * Client-facing API facade. Mirrors the proposed /api routes from the spec, but runs
  * in the browser against the simulated server. The actor always comes from the tab's
@@ -57,7 +58,7 @@ export const api = {
   getBooking: (id: string) => handle(() => B.getBooking(ctx(), id)),
   getEvents: (id: string, after?: number) => handle(() => B.getEvents(ctx(), id, after)),
   listBookings: (scope: 'driver' | 'host' | 'all') => handle(() => B.listBookings(ctx(), scope)),
-  accept: (id: string, expected_sequence?: number) => handle(() => B.acceptBooking(ctx(), id, { expected_sequence })),
+  accept: (id: string, expected_sequence?: number, equipment_choice?: EquipmentChoice) => handle(() => B.acceptBooking(ctx(), id, { expected_sequence, equipment_choice })),
   decline: (id: string, reason: string, expected_sequence?: number) => handle(() => B.declineBooking(ctx(), id, reason, expected_sequence)),
   cancel: (id: string, reason: string, expected_sequence?: number) => handle(() => B.cancelBooking(ctx(), id, reason, expected_sequence)),
 

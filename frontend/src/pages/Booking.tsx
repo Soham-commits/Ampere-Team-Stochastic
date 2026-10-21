@@ -1,29 +1,30 @@
-import { Ban, CarFront, Check, Copy, CreditCard, FastForward, History, KeyRound, MapPin, Navigation, Play, Receipt, RefreshCw, Square, Wifi, WifiOff } from 'lucide-react'
+import { EquipmentConfirmationSheet } from '../features/booking-equipment/EquipmentConfirmationSheet'
+import { EquipmentSummary } from '../features/booking-equipment/EquipmentSummary'
+import { Ban, CarFront, Check, Copy, CreditCard, FastForward, KeyRound, MapPin, Navigation, Play, Receipt, Square } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useBookingStream, useNow, useSession, type StreamStatus } from '../app/hooks'
+import { useBookingStream, useNow, useSession } from '../app/hooks'
 import { CarExoskeleton } from '../components/CarExoskeleton'
-import { Countdown, EventLog, LifecycleChip, LifecycleTracker, OutcomeNotice, StationArt } from '../components/booking'
+import { Countdown, OutcomeNotice } from '../components/booking'
 import { Page, PageHeader } from '../components/Shell'
-import { Button, Card, Chip, Dot, EmptyState, Field, inputClass, Notice, SectionTitle, Sheet, Skeleton, useAction, useToast } from '../components/ui'
+import { Button, Card, Chip, Dot, EmptyState, Field, inputClass, Notice, Sheet, Skeleton, useAction, useToast } from '../components/ui'
 import { LIFECYCLE_LABEL, type BookingState } from '../domain/booking'
 import { CONNECTOR_LABEL, modelById, userById } from '../domain/catalogue'
 import { POLICY } from '../domain/policy'
 import type { SitePrivateAccess } from '../domain/types'
 import { cn } from '../lib/cn'
-import { istDayLabel, istTime, kwh, km, minutes, rupees } from '../lib/format'
+import { istDayLabel, istTime, kwh, minutes, rupees } from '../lib/format'
 import { uuid } from '../lib/ids'
 import { api } from '../server/api'
 import { allowedActions, arrivalWindow, sessionProgress } from '../server/bookings'
 import { readDb } from '../server/db'
-import { QuoteBreakdown } from './Station'
 
 export default function Booking() {
   const { id } = useParams()
   const user = useSession()!
   const now = useNow(500)
   const stream = useBookingStream(id)
-  const { state, events, status } = stream
+  const { state, status } = stream
   const header = readDb().bookings.find((b) => b.id === id)
   const toast = useToast()
 
@@ -48,7 +49,6 @@ export default function Booking() {
   const actions = allowedActions(state, header, user)
   const isDriverView = header.driver_id === user.id
   const isHostView = !!user.host_account_id && user.host_account_id === header.host_account_id
-  const site = readDb().sites.find((s) => s.id === header.site_id)
   const model = modelById(state.request.vehicle.model_id)
   const progress = sessionProgress(state, now)
   const gainPct = model ? (state.request.quote.battery_wh / model.usable_battery_wh) * 100 : 0
@@ -73,16 +73,11 @@ export default function Booking() {
         }
       />
       <Page>
-        <div className="lg:grid lg:grid-cols-[1fr_400px] lg:gap-8">
+        <div className="mx-auto max-w-2xl">
           <div>
             <Card className="overflow-hidden !p-0">
-              <div className="flex items-center justify-between gap-3 p-4 pb-0">
-                <div className="flex items-center gap-2">
-                  <LifecycleChip state={state} />
-                  {state.source === 'JURY_CONSOLE' ? <Chip tone="outline">via jury console</Chip> : null}
-                </div>
-                <StreamBadge status={status} />
-              </div>
+              <div className="px-4 pt-4 text-xs text-volt-strong">{state.lifecycle === 'done' ? 'Charging completed' : state.lifecycle === 'host_confirmed' ? 'Your space is reserved' : LIFECYCLE_LABEL[state.lifecycle]}</div>
+              {status === 'paused' || status === 'error' || status === 'recovering' ? <p className="px-4 pt-2 text-xs text-amber">Updates interrupted. Reconnecting…</p> : null}
               <div className="grid grid-cols-[1fr_auto] items-center gap-2 p-4">
                 <div className="min-w-0">
                   <div className="text-[40px] font-light leading-none tracking-tight">{state.lifecycle === 'charging' || state.lifecycle === 'done' ? `${Math.round(liveSoc)}%` : LIFECYCLE_LABEL[state.lifecycle]}</div>
@@ -102,9 +97,6 @@ export default function Booking() {
                   <CarExoskeleton soc={liveSoc} charging={state.lifecycle === 'charging'} className="h-full w-full" scan={state.lifecycle === 'charging'} />
                 </div>
               </div>
-              <div className="px-4 pb-4">
-                <LifecycleTracker state={state} />
-              </div>
             </Card>
 
             <div className="mt-4 space-y-3">
@@ -112,40 +104,6 @@ export default function Booking() {
               <StagePanel state={state} actions={actions} isDriver={isDriverView} isHost={isHostView} now={now} progress={progress} />
             </div>
 
-            <SectionTitle
-              action={
-                <Button size="sm" variant="secondary" onClick={() => void stream.fullReplay()}>
-                  <RefreshCw className="size-3.5" /> Replay from database
-                </Button>
-              }
-            >
-              <span className="inline-flex items-center gap-2">
-                <History className="size-4" /> Event history
-              </span>
-            </SectionTitle>
-            <Card>
-              <EventLog events={events} />
-              <div className="mt-4 rounded-2xl bg-surface-2 p-3 text-xs text-muted">
-                State is derived by replaying {events.length} append-only events in sequence order (latest #{state.last_sequence}). Reloading this page fetches the stream from the database and replays it — nothing is read from browser memory or a status column. Live: {stream.stats.applied} applied · {stream.stats.duplicates} duplicates ignored · {stream.stats.gaps} gaps refetched · {stream.stats.replays} full replays.
-              </div>
-            </Card>
-          </div>
-
-          <div>
-            <SectionTitle className="lg:mt-0">Details</SectionTitle>
-            <Card>
-              {site ? <StationArt type={site.site_type} className="mb-4 h-28 w-full" charging={state.lifecycle === 'charging'} /> : null}
-              <QuoteBreakdown quote={{ snapshot: state.request.quote }} />
-              <div className="mt-4 space-y-1.5 border-t border-line pt-3 text-xs text-muted">
-                <div>
-                  Plan {state.request.quote.plan.toLowerCase()} · policy {state.request.policy_version} · tariff v{state.request.quote.tariff_version}
-                </div>
-                <div>
-                  Range at request: {km(state.request.vehicle.range_budget_m)} budget vs {km(state.request.vehicle.route_m)} route ({state.request.vehicle.route_provider})
-                </div>
-                <div>Payment: {state.payment === 'CAPTURED' ? `demo captured ${rupees(state.paid_paise)}` : state.payment === 'REFUNDED' ? 'simulated refund' : state.payment === 'FAILED' ? 'last attempt failed' : 'not yet taken'}</div>
-              </div>
-            </Card>
             {actions.includes('RECEIPT') ? (
               <Link to={`/receipt/${header.id}`} className="mt-3 block">
                 <Button variant="secondary" className="w-full">
@@ -160,21 +118,6 @@ export default function Booking() {
   )
 }
 
-function StreamBadge({ status }: { status: StreamStatus }) {
-  const map = {
-    live: { t: 'Live', tone: 'volt' as const, icon: <Wifi className="size-3" /> },
-    loading: { t: 'Loading', tone: 'neutral' as const, icon: <RefreshCw className="size-3 animate-spin" /> },
-    recovering: { t: 'Catching up', tone: 'amber' as const, icon: <RefreshCw className="size-3 animate-spin" /> },
-    paused: { t: 'Offline (simulated)', tone: 'amber' as const, icon: <WifiOff className="size-3" /> },
-    error: { t: 'Error', tone: 'danger' as const, icon: <WifiOff className="size-3" /> },
-  }[status]
-  return (
-    <Chip tone={map.tone} icon={map.icon}>
-      {map.t}
-    </Chip>
-  )
-}
-
 function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state: BookingState; actions: ReturnType<typeof allowedActions>; isDriver: boolean; isHost: boolean; now: number; progress: number }) {
   const { run, busy } = useAction()
   const id = state.booking_id
@@ -186,6 +129,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
   const [cancelOpen, setCancelOpen] = useState(false)
   const [reason, setReason] = useState('Plans changed')
   const [declineOpen, setDeclineOpen] = useState(false)
+  const [acceptOpen, setAcceptOpen] = useState(false)
 
   if (state.ended && state.lifecycle !== 'done') {
     return isDriver ? (
@@ -197,7 +141,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
     ) : null
   }
 
-  const panels: React.ReactNode[] = []
+  const panels: React.ReactNode[] = state.request.equipment_choice || state.equipment_confirmed ? [<EquipmentSummary key="equipment" state={state} />] : []
 
   /* requested */
   if (state.lifecycle === 'requested') {
@@ -210,7 +154,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
             <Button variant="secondary" onClick={() => setDeclineOpen(true)}>
               Decline
             </Button>
-            <Button variant="volt" loading={busy === 'accept'} onClick={() => run('accept', () => api.accept(id, seq), 'Confirmed — HostConfirmed appended')}>
+            <Button variant="volt" loading={busy === 'accept'} onClick={() => setAcceptOpen(true)}>
               <Check className="size-4" /> Confirm
             </Button>
           </div>
@@ -441,6 +385,7 @@ function StagePanel({ state, actions, isDriver, isHost, now, progress }: { state
   return (
     <>
       {panels}
+      <EquipmentConfirmationSheet open={acceptOpen} onClose={() => setAcceptOpen(false)} role="host" requested={state.request.equipment_choice} mode={state.request.quote.charging_mode} equipmentOptions={state.request.quote.equipment_options} busy={busy === 'accept'} canConfirm={actions.includes('ACCEPT')} onConfirm={async (choice) => { const result = await run('accept', () => api.accept(id, seq, choice), 'Booking and equipment confirmed'); if (result) setAcceptOpen(false) }} />
       <Sheet open={cancelOpen} onClose={() => setCancelOpen(false)} title="Cancel this booking?">
         <p className="text-sm text-ink-2">
           {state.payment === 'CAPTURED' ? `A simulated refund of ${rupees(state.paid_paise, { decimals: true })} (unused service plus fee) goes back to the original method.` : 'No payment has been taken, so nothing is charged.'} The slot is released and a BookingCancelled event is appended.

@@ -1,28 +1,29 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/urbanist';
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource-variable/host-grotesk';
 @import 'leaflet/dist/leaflet.css';
 
 @theme {
-  --font-sans: 'Urbanist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'DM Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 
-  --color-canvas: #f8faff;
+  --color-canvas: #ffffff;
   --color-surface: #ffffff;
   --color-surface-2: #f1f5fb;
   --color-ink: #0e0f0e;
   --color-ink-2: #4c4f4a;
   --color-muted: #8a8d86;
   --color-line: #e2e8f0;
-  --color-volt: #2563eb;
-  --color-volt-strong: #1d4ed8;
-  --color-volt-soft: #dbeafe;
+  --color-volt: #2345a1;
+  --color-volt-strong: #163075;
+  --color-volt-soft: #e5ecff;
   --color-amber: #d4973a;
   --color-amber-soft: #f7ead3;
   --color-danger: #c4543d;
   --color-danger-soft: #f6e0da;
-  --color-night: #161716;
-  --color-night-2: #222422;
-  --color-night-3: #2e312e;
+  --color-night: #020815;
+  --color-night-2: #091530;
+  --color-night-3: #102455;
 
   --radius-card: 1.6rem;
   --shadow-soft: 0 1px 2px rgb(14 15 14 / 0.04), 0 8px 24px -12px rgb(14 15 14 / 0.12);
@@ -52,12 +53,32 @@
   to { opacity: 1; transform: none; }
 }
 
+/* Shared with the landing page's dark-to-blue visual direction. */
+:root {
+  --app-gradient: linear-gradient(
+    180deg,
+    #000000 0%,
+    #020815 18%,
+    #091530 30%,
+    #102455 48%,
+    #163075 60%,
+    #2345A1 75%,
+    #3560CF 90%,
+    #4B73DB 100%
+  );
+}
 html {
+  background: #ffffff;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
 body {
-  background: var(--color-canvas);
+  --color-ink-2: #526079;
+  --color-muted: #65728a;
+  --color-line: #e1e7f2;
+  --content-ink: #0e0f0e;
+  --content-accent: #2345a1;
+  background: #ffffff;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-feature-settings: 'ss01', 'tnum';
@@ -83,28 +104,26 @@ button:disabled {
 
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 .pt-safe { padding-top: env(safe-area-inset-top); }
-.bottom-safe { bottom: calc(env(safe-area-inset-bottom) + 0.75rem); }
+.bottom-safe { bottom: calc(env(safe-area-inset-bottom) + 0.35rem); }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
-/* Leaflet on the dark map */
+/* Light maps with the app blue for pins and range indicators. */
 .leaflet-container {
-  background: var(--color-night);
+  background: #eef2f7;
   font-family: var(--font-sans);
 }
 .leaflet-control-attribution {
-  background: rgb(22 23 22 / 0.7) !important;
-  color: #9a9d96 !important;
+  background: rgb(255 255 255 / 0.92) !important;
+  color: #526079 !important;
   font-size: 10px;
   border-radius: 8px 0 0 0;
 }
-.leaflet-control-attribution a { color: #c9ccc4 !important; }
+.leaflet-control-attribution a { color: #2345a1 !important; }
 .leaflet-div-icon { background: none; border: none; }
-/* Standard OSM tiles rendered dark. Demo use only — production needs a contracted tile provider. */
-.amp-dark-tiles { filter: invert(1) hue-rotate(180deg) grayscale(0.85) brightness(0.78) contrast(0.92); }
 .leaflet-tooltip.amp-tip {
-  background: var(--color-night-2);
-  color: #fff;
+  background: #ffffff;
+  color: #102455;
   border: 0;
   border-radius: 10px;
   box-shadow: var(--shadow-float);
@@ -118,8 +137,8 @@ button:disabled {
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: #2563eb;
-  border: 4px solid rgb(59 130 246 / 0.35);
+  background: #2345a1;
+  border: 4px solid rgb(75 115 219 / 0.4);
   box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
   color: #fff;
   transition: transform 0.2s;
@@ -149,3 +168,54 @@ button:disabled {
 }
 
 .bg-ink .text-volt, .bg-night .text-volt, .bg-night-2 .text-volt { color: #93c5fd; }
+
+/* Mobile sheets meet the bottom edge; safe-area padding lives inside the panel. */
+.sheet-overlay {
+  padding: max(12px, env(safe-area-inset-top)) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+.sheet-panel {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  max-height: calc(100dvh - max(12px, env(safe-area-inset-top)));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@media (min-width: 640px) {
+  .sheet-overlay { padding: 24px; }
+  .sheet-panel { border-radius: 28px; max-height: calc(100dvh - 48px); }
+}
+
+/* Dark app canvas, light content surfaces: keep text contrast local to each surface. */
+:where(.bg-surface, .bg-surface-2, .bg-volt-soft, .bg-amber-soft, .bg-danger-soft, .bg-white, [class~="bg-surface/90"], [class~="bg-surface/95"], [class~="bg-white/90"], [class~="bg-white/95"]) {
+  --color-ink-2: #526079;
+  --color-muted: #65728a;
+  --color-line: #e1e7f2;
+  --content-ink: #0e0f0e;
+  --content-accent: #2345a1;
+  color: var(--color-ink);
+}
+.text-ink { color: var(--content-ink, var(--color-ink)); }
+.text-volt-strong { color: var(--content-accent, var(--color-volt-strong)); }
+h1, h2, h3, h4 {
+  font-family: 'Host Grotesk Variable', var(--font-sans);
+}
+/* The brand gradient is an accent, never a page background. */
+.bg-volt {
+  background-image: var(--app-gradient);
+}
+.bg-volt:hover { background-color: var(--color-volt-strong); }
+/* Keep interactive actions solid blue while retaining decorative gradients. */
+button.bg-volt,
+a.bg-volt {
+  background-image: none;
+}
+.driver-home { padding-bottom: 3rem; }
+@media (max-width: 1023px) {
+  .home-scroll-area {
+    height: calc(100dvh - 82px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+@media (min-width: 1024px) {
+  .driver-home { padding-bottom: 3rem; }
+}

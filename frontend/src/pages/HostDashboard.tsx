@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { EquipmentConfirmationSheet } from '../features/booking-equipment/EquipmentConfirmationSheet'
+import { EQUIPMENT_LABELS } from '../domain/equipment'
 import { CalendarClock, Check, ChevronRight, Inbox, PlugZap, Wallet, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useNow, useQuery, useSession } from '../app/hooks'
@@ -23,8 +26,10 @@ export default function HostDashboard() {
   const bookings = useQuery(() => api.listBookings('host'))
   const sites = useQuery(() => api.hostSites())
   const earnings = useQuery(() => api.hostEarnings())
+  const [confirmId, setConfirmId] = useState<string | null>(null)
   const rows = bookings.data ?? []
   const requests = rows.filter((r) => !r.state.ended && r.state.lifecycle === 'requested')
+  const selected = requests.find((row) => row.header.id === confirmId)
   const upcoming = rows.filter((r) => !r.state.ended && r.state.lifecycle !== 'requested')
 
   return (
@@ -56,6 +61,7 @@ export default function HostDashboard() {
                         <div className="mt-1 text-sm text-muted">
                           {kwh(state.request.quote.grid_wh)} · {rupees(state.request.quote.total_paise)} · arriving at {state.request.vehicle.soc}%
                         </div>
+                        {state.request.equipment_choice ? <p className="mt-2 text-xs font-medium text-volt-strong">{EQUIPMENT_LABELS[state.request.equipment_choice]}</p> : null}
                       </div>
                       {state.source === 'JURY_CONSOLE' ? <Chip tone="outline">console</Chip> : null}
                     </div>
@@ -64,7 +70,7 @@ export default function HostDashboard() {
                       <Button variant="secondary" loading={busy === `d${header.id}`} onClick={() => run(`d${header.id}`, () => api.decline(header.id, 'Host unavailable', state.last_sequence), 'Declined — the slot is released')}>
                         Decline
                       </Button>
-                      <Button variant="volt" loading={busy === `a${header.id}`} onClick={() => run(`a${header.id}`, () => api.accept(header.id, state.last_sequence), `Confirmed ${header.booking_ref}`)}>
+                      <Button variant="volt" loading={busy === `a${header.id}`} onClick={() => setConfirmId(header.id)}>
                         <Check className="size-4" /> Confirm
                       </Button>
                       <Link to={`/booking/${header.id}`} aria-label="Open booking" className="grid size-11 place-items-center rounded-full bg-surface-2">
@@ -160,6 +166,7 @@ export default function HostDashboard() {
           </div>
         </div>
       </Page>
+      <EquipmentConfirmationSheet open={!!selected} onClose={() => setConfirmId(null)} role="host" requested={selected?.state.request.equipment_choice} mode={selected?.state.request.quote.charging_mode ?? 'AC'} equipmentOptions={selected?.state.request.quote.equipment_options} busy={busy === `a${confirmId}`} onConfirm={async (choice) => { if (!selected) return; const result = await run(`a${selected.header.id}`, () => api.accept(selected.header.id, selected.state.last_sequence, choice), `Confirmed ${selected.header.booking_ref}`); if (result) setConfirmId(null) }} />
     </>
   )
 }

@@ -142,8 +142,8 @@ export function StationArt({ type, className, charging }: { type: SiteType; clas
         <g transform="translate(232 70)">
           <rect x="0" y="0" width="36" height="130" rx="8" fill="#f6f6f3" stroke="#0e0f0e" strokeOpacity="0.35" strokeWidth="1.5" />
           <rect x="7" y="12" width="22" height="30" rx="4" fill="#161716" />
-          <rect x="11" y="18" width="14" height="4" rx="2" fill="#2563eb" />
-          <rect x="15" y="0" width="6" height="130" fill="#2563eb" fillOpacity="0.85" />
+          <rect x="11" y="18" width="14" height="4" rx="2" fill="#3560cf" />
+          <rect x="15" y="0" width="6" height="130" fill="#3560cf" fillOpacity="0.85" />
           <path d="M36 70c30 0 30 40 60 40" stroke="#161716" strokeWidth="3" fill="none" />
         </g>
         {/* parked car outline */}
@@ -153,7 +153,7 @@ export function StationArt({ type, className, charging }: { type: SiteType; clas
           <circle cx="88" cy="46" r="10" fill="#f6f6f3" />
         </g>
         {charging ? (
-          <circle cx="250" cy="96" r="6" fill="#2563eb">
+          <circle cx="250" cy="96" r="6" fill="#3560cf">
             <animate attributeName="r" values="6;14;6" dur="1.6s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite" />
           </circle>

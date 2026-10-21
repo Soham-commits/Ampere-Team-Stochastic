@@ -1,3 +1,4 @@
+import { ProfileTools } from '../components/ProfileTools'
 import { ArrowUpRight, BatteryCharging, Gauge, Target, Download, FastForward, LogOut, RotateCcw, Route, Terminal, Wifi, WifiOff } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -86,6 +87,8 @@ export default function Settings() {
             <p className="mt-3 text-[11px] leading-relaxed text-muted">Battery level is entered by you, not live telemetry. Range budget includes {POLICY.reserve_pct}% reserve and ×{POLICY.uncertainty} uncertainty.</p>
           </section>
         ) : null}
+
+        <ProfileTools />
 
         <details className="mt-6 rounded-3xl border border-line bg-surface p-4">
           <summary className="cursor-pointer text-sm font-semibold">App & demo settings</summary>

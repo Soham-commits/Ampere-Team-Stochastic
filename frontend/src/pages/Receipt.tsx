@@ -21,8 +21,8 @@ export default function Receipt() {
   const proceeds = illustrativeHostProceeds(q.energy_subtotal_paise, POLICY.commission_bps)
   const row = (k: string, v: string, strong = false) => (
     <div className={`flex justify-between gap-4 py-1.5 ${strong ? 'text-base font-semibold' : 'text-sm'}`}>
-      <span className={strong ? '' : 'text-muted'}>{k}</span>
-      <span className="text-right">{v}</span>
+      <span className={`min-w-0 flex-1 ${strong ? '' : 'text-muted'}`}>{k}</span>
+      <span className="max-w-[62%] shrink-0 break-words text-right">{v}</span>
     </div>
   )
   return (
@@ -30,12 +30,12 @@ export default function Receipt() {
       <PageHeader back title="Demo receipt" subtitle={state.booking_ref} />
       <Page className="mx-auto max-w-xl">
         <Card className="relative overflow-hidden">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="text-sm text-muted">Ampere · simulated session</div>
               <div className="mt-1 text-4xl font-light tracking-tight">{rupees(state.paid_paise || q.total_paise, { decimals: true })}</div>
             </div>
-            <Chip tone="amber">Illustrative — not a tax invoice</Chip>
+            <Chip tone="amber" className="max-w-full self-start !whitespace-normal">Illustrative — not a tax invoice</Chip>
           </div>
           <div className="my-4 border-t border-dashed border-line" />
           {row('Site', state.request.site_name)}

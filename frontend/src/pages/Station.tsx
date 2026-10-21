@@ -1,8 +1,14 @@
-import { Accessibility, CalendarClock, Clock, Info, Minus, Plus, ShieldCheck, Zap } from 'lucide-react'
+import { EquipmentConfirmationSheet } from '../features/booking-equipment/EquipmentConfirmationSheet'
+import type { EquipmentChoice } from '../domain/equipment'
+import { SolarBadge } from '../features/solar/SolarBadge'
+import { Accessibility, CalendarClock, Clock, Info, ShieldCheck, Zap } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useNow, useQuery, useSession } from '../app/hooks'
-import { SITE_TYPE_LABEL, StationArt, StatusLine, siteIcon } from '../components/booking'
+import { SITE_TYPE_LABEL, StatusLine, siteIcon } from '../components/booking'
+import { ChargingBayPlan } from '../components/ChargingBayPlan'
+import { DurationDial } from '../components/DurationDial'
+import { slotProblem } from '../server/availability'
 import { Page, PageHeader } from '../components/Shell'
 import { Button, Card, Chip, EmptyState, Notice, Range, SectionTitle, Segmented, Skeleton, useAction } from '../components/ui'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
@@ -11,6 +17,7 @@ import type { ConnectorStandard, Plan } from '../domain/types'
 import { cn } from '../lib/cn'
 import { countdown, istTime, km, kwh, minutes, rupees } from '../lib/format'
 import { uuid } from '../lib/ids'
+import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
 import type { Quote } from '../server/db'
 import { readDb } from '../server/db'
@@ -47,6 +54,7 @@ export default function Station() {
   const [target, setTarget] = useState<number>(vehicle?.target_soc ?? 80)
   const [plan, setPlan] = useState<Plan>('STANDARD')
   const [accepted, setAccepted] = useState(false)
+  const [equipmentOpen, setEquipmentOpen] = useState(false)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [quoteError, setQuoteError] = useState<{ code: string; message: string; fields?: Record<string, string> } | null>(null)
   const [quoting, setQuoting] = useState(false)
@@ -93,10 +101,10 @@ export default function Station() {
     return () => clearTimeout(t)
   }, [conn?.id, start, duration, plan, mode, gridKwh, target, soc, model?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const request = async () => {
+  const request = async (equipment_choice: EquipmentChoice) => {
     if (!quote) return
-    const res = await run('book', () => api.createBooking({ quote_id: quote.id, idempotency_key: idemKey.current, policy_acceptance_version: POLICY.version }), (d) => `Request ${d.booking_ref} sent to the host`)
-    if (res) nav(`/booking/${res.booking_id}`)
+    const res = await run('book', () => api.createBooking({ quote_id: quote.id, idempotency_key: idemKey.current, policy_acceptance_version: POLICY.version, equipment_choice }), (d) => `Request ${d.booking_ref} sent to the host`)
+    if (res) { setEquipmentOpen(false); nav(`/booking/${res.booking_id}`) }
   }
 
   if (detail.loading && !detail.data) return <Page className="pt-6"><Skeleton className="h-64" /></Page>
@@ -116,10 +124,27 @@ export default function Station() {
     <>
       <PageHeader back title={site.name} subtitle={`${SITE_TYPE_LABEL[site.site_type]} · ${site.public_area}`} />
       <Page>
+        <div className="mb-3"><SolarBadge siteId={site.id} /></div>
         <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-8">
           <div>
-            <div className="relative">
-              <StationArt type={site.site_type} className="h-48 w-full sm:h-64" />
+            {!directory ? (
+              <>
+                <div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-lg font-medium">Choose your charging bay</h2><span className="text-xs text-muted">{detail.data.resources.length} {detail.data.resources.length === 1 ? 'bay' : 'bays'}</span></div>
+                <ChargingBayPlan bays={detail.data.resources.map((r) => {
+                  const compatible = options.some((o) => o.resource_id === r.id)
+                  const problem = start ? slotProblem(r.id, Date.parse(start), Date.parse(start) + duration * 60_000, now) : null
+                  return { id: r.id, label: r.label, selectable: compatible && !problem, note: !compatible ? 'Not eligible for your car' : problem === 'SLOT_UNAVAILABLE' ? 'Reserved for this time' : problem ? 'Pick a different time' : start ? 'Free for selected time' : 'Choose a start time' }
+                })} selectedId={conn?.resource_id} onSelect={(id) => { const option = options.find((o) => o.resource_id === id); if (option) setConnectorId(option.id) }} />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {options.filter((o) => o.resource_id === conn?.resource_id).map((o) => <button key={o.id} aria-pressed={o.id === conn?.id} onClick={() => setConnectorId(o.id)} className={cn('rounded-full px-4 py-2 text-xs font-medium', o.id === conn?.id ? 'bg-surface text-ink' : 'border border-line text-ink-2')}>{CONNECTOR_LABEL[o.standard]} · {o.effective_power_kw} kW</button>)}
+                </div>
+                <p className="mt-3 text-[11px] text-muted">Availability is for your chosen time. Host confirmation is still required.</p>
+              </>
+            ) : null}
+            <details className="mt-5 rounded-3xl border border-line p-4">
+              <summary className="cursor-pointer text-sm font-medium">About this charger & connector details</summary>
+            <div className="relative mt-4">
+              <img src={stationImage(site.id)} alt="Illustrative white SUV at a charging location" className="h-48 w-full rounded-[var(--radius-card)] object-cover sm:h-64" />
               <div className="absolute left-3 top-3 flex gap-1.5">
                 <Chip tone="outline" className="bg-surface/90">Demo listing</Chip>
                 {site.location_precision === 'APPROXIMATE' ? <Chip tone="outline" className="bg-surface/90">Approximate area</Chip> : null}
@@ -183,7 +208,7 @@ export default function Station() {
                           {CONNECTOR_LABEL[c.standard]} · {c.mode} · {c.rated_power_kw} kW
                         </span>
                         <span className="block truncate text-xs text-muted">
-                          {r.label} · {c.cable === 'HOST_TETHERED' ? 'cable provided' : 'bring your own cable'}
+                          {r.label} · {c.cable === 'HOST_TETHERED' ? 'cable provided' : c.cable === 'HOST_OR_DRIVER' ? 'cable or socket · confirm when booking' : 'bring your own cable'}
                           {ok ? ` · ${ok.effective_power_kw} kW for your car` : ' · not compatible'}
                         </span>
                       </span>
@@ -209,26 +234,18 @@ export default function Station() {
               )}
             </div>
             <p className="mt-2 text-xs text-muted">Approval means synthetic evidence was reviewed — not a guarantee against failure.</p>
+            </details>
           </div>
 
           {options.length ? (
             <div className="lg:sticky lg:top-8 lg:self-start">
-              <SectionTitle className="lg:mt-0">Request a slot</SectionTitle>
+              <SectionTitle className="lg:mt-0">Plan your charge</SectionTitle>
               <Card className="space-y-5">
                 <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-ink-2">Duration</span>
-                    <div className="flex items-center gap-2">
-                      <button aria-label="Shorter" onClick={() => setDuration((d) => Math.max(POLICY.min_booking_min, d - 15))} className="grid size-9 place-items-center rounded-full bg-surface-2">
-                        <Minus className="size-4" />
-                      </button>
-                      <span className="w-16 text-center font-semibold tabular-nums">{duration} min</span>
-                      <button aria-label="Longer" onClick={() => setDuration((d) => Math.min(POLICY.max_booking_min, d + 15))} className="grid size-9 place-items-center rounded-full bg-surface-2">
-                        <Plus className="size-4" />
-                      </button>
-                    </div>
-                  </div>
+                  <div className="mb-3 flex items-center justify-between"><span className="text-base font-medium">Charging duration</span><span className="text-xs text-muted">{conn?.resource_label}</span></div>
                   <Segmented size="sm" value={String(day) as '0' | '1'} onChange={(v) => setDay(Number(v) as 0 | 1)} options={[{ value: '0', label: 'Today' }, { value: '1', label: 'Tomorrow' }]} />
+                  <div className="mt-3"><DurationDial value={duration} onChange={setDuration} /></div>
+                  <p className="mt-4 text-xs font-medium text-ink-2">Choose your arrival time</p>
                   <div className="no-scrollbar -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
                     {(slots.data ?? []).map((t) => (
                       <button key={t} onClick={() => setStart(t)} className={cn('h-10 shrink-0 rounded-full px-3.5 text-sm font-semibold tabular-nums', start === t ? 'bg-ink text-white' : 'bg-surface-2 text-ink-2')}>
@@ -321,7 +338,7 @@ export default function Station() {
                     I accept the booking policy ({POLICY.version}): host confirms within 2 min, checkout within 5 min, full refund of unused service if cancelled. Don’t travel until the host confirms.
                   </span>
                 </label>
-                <Button size="lg" className="w-full" disabled={!quote || !accepted || quoteValid <= 0} loading={busy === 'book'} onClick={request}>
+                <Button size="lg" className="w-full" disabled={!quote || !accepted || quoteValid <= 0} loading={busy === 'book'} onClick={() => setEquipmentOpen(true)}>
                   Request booking {quote ? `· ${rupees(quote.snapshot.total_paise)}` : ''}
                 </Button>
                 <p className="flex items-start gap-2 text-xs text-muted">
@@ -332,6 +349,7 @@ export default function Station() {
           ) : null}
         </div>
       </Page>
+      <EquipmentConfirmationSheet open={equipmentOpen} onClose={() => setEquipmentOpen(false)} role="driver" mode={quote?.snapshot.charging_mode ?? 'AC'} equipmentOptions={quote?.snapshot.equipment_options} busy={busy === 'book'} canConfirm={!!quote && accepted && quoteValid > 0} onConfirm={request} />
     </>
   )
 }

@@ -1,10 +1,11 @@
-import type { QuoteSnapshot, VehicleSnapshot } from '../domain/booking'
+import type { EventType, QuoteSnapshot, VehicleSnapshot } from '../domain/booking'
+import { buildCatalogue, EXTRA_DEMO_SITE_IDS } from '../domain/catalogue'
 import { POLICY } from '../domain/policy'
 import { price } from '../domain/calc'
 import { bookingRef, uuid } from '../lib/ids'
 import { ceilToStep, istParts } from '../lib/time'
-import { mutateDb, serverNow, type BookingHeader } from './db'
-import { appendEvent, type AppendMeta } from './eventStore'
+import { mutateDb, readDb, serverNow, type BookingHeader } from './db'
+import { appendEvent, readStream, type AppendMeta } from './eventStore'
 
 /*
  * Seeds two synthetic streams so the demo has history:
@@ -64,5 +65,75 @@ export async function seedDemoBookings() {
 
   await mutateDb((d) => {
     d.bookings.push(...headers)
+  })
+}
+
+/** Add driver-facing examples once, including to an already-used demo browser. */
+export async function seedDriverDemoBookings() {
+  const { withLocks } = await import('./storage')
+  const { nextSlots } = await import('./availability')
+  await withLocks(['demo-driver-fixtures-v1'], async () => {
+    if (readDb().mode !== 'DEMO') return
+    const missing = EXTRA_DEMO_SITE_IDS.filter((id) => !readDb().sites.some((s) => s.id === id))
+    if (missing.length) {
+      const catalogue = buildCatalogue(serverNow())
+      const resources = catalogue.resources.filter((r) => missing.includes(r.site_id))
+      const resourceIds = resources.map((r) => r.id)
+      await mutateDb((d) => {
+        d.sites.push(...catalogue.sites.filter((s) => missing.includes(s.id)))
+        d.site_private.push(...catalogue.site_private.filter((s) => missing.includes(s.site_id)))
+        d.resources.push(...resources)
+        d.connectors.push(...catalogue.connectors.filter((c) => resourceIds.includes(c.resource_id)))
+        d.rules.push(...catalogue.rules.filter((r) => resourceIds.includes(r.resource_id)))
+        d.checks.push(...catalogue.checks.filter((c) => missing.includes(c.site_id)))
+        d.tariffs.push(...catalogue.tariffs.filter((t) => missing.includes(t.site_id)))
+      })
+    }
+    // These sample AC wallboxes have sockets plus a host-supplied detachable cable.
+    const flexibleIds = ['con-cafe2-t2', 'con-riverside-t2', 'con-courtyard-t2']
+    if (readDb().connectors.some((c) => flexibleIds.includes(c.id) && c.cable !== 'HOST_OR_DRIVER')) {
+      await mutateDb((db) => {
+        for (const connector of db.connectors) if (flexibleIds.includes(connector.id)) connector.cable = 'HOST_OR_DRIVER'
+      })
+    }
+    const sources = readDb().bookings.filter((b) => b.driver_id === 'u-driver2')
+    for (const [index, source] of [sources[0], sources[1], sources[0], sources[1]].entries()) {
+      if (!source) continue
+      const id = `demo-driver-booking-v1-${index}`
+      if (readDb().bookings.some((b) => b.id === id)) continue
+      const events = readStream(source.id)
+      if (!events.length) continue
+      const completed = events.some((e) => e.event_type === 'ChargingCompleted')
+      const siteId = index === 2 ? 'site-riverside' : index === 3 ? 'site-courtyard' : 'site-cafe'
+      const resourceId = index === 2 ? 'res-riverside-1' : index === 3 ? 'res-courtyard-1' : 'res-cafe-2'
+      const connectorId = index === 2 ? 'con-riverside-t2' : index === 3 ? 'con-courtyard-t2' : 'con-cafe2-t2'
+      const site = readDb().sites.find((s) => s.id === siteId)!
+      const shift = index === 3 ? -86_400_000 : 0
+      const recordedAt = (at: string) => new Date(Date.parse(at) + shift).toISOString()
+      const now = serverNow()
+      const { dayStart } = istParts(now)
+      const start = completed ? null : nextSlots(resourceId, 90, dayStart + 86_400_000 + (index === 2 ? 16 : 10) * 3600_000, now, 1)[0]
+      if (!completed && start === undefined) continue
+      const ref = `AMP-DEMO0${index + 1}`
+      for (const event of events) {
+        if (event.event_type === 'BookingRequested') {
+          const original = event.payload as import('../domain/booking').RequestedPayload
+          const payload = {
+            ...original, booking_ref: ref, driver_id: 'u-driver',
+            vehicle: { ...original.vehicle, model_id: 'vm-nexon-ev-demo', model_label: 'Tata Nexon EV (Demo profile · 40 kWh usable)', soc: 30, range_budget_m: 56000, route_m: site.route_fixture_m ?? 1800 },
+            site_id: siteId, site_name: site.name, resource_id: resourceId, connector_id: connectorId, host_account_id: 'ha-cafe',
+            start_at: completed ? recordedAt(original.start_at) : new Date(start!).toISOString(),
+            end_at: completed ? recordedAt(original.end_at) : new Date(start! + 90 * 60_000).toISOString(),
+            blocked_until: completed ? recordedAt(original.blocked_until) : new Date(start! + (90 + POLICY.buffer_min) * 60_000).toISOString(),
+          }
+          appendEvent(id, 'BookingRequested', payload, { actor_id: 'u-driver', actor_role: 'DRIVER', source: 'UI', seed_recorded_at: recordedAt(event.recorded_at) })
+        } else if (event.event_type === 'DriverDeparted') {
+          appendEvent(id, 'DriverDeparted', { range_budget_m: 56000, route_m: site.route_fixture_m ?? 1800, route_provider: 'Seeded demo road distance' }, { actor_id: 'u-driver', actor_role: 'DRIVER', source: 'UI', seed_recorded_at: recordedAt(event.recorded_at) })
+        } else {
+          appendEvent<EventType>(id, event.event_type, event.payload, { actor_id: event.actor_role === 'DRIVER' ? 'u-driver' : event.actor_role === 'HOST' ? 'u-host-cafe' : event.actor_id, actor_role: event.actor_role, source: event.source, seed_recorded_at: recordedAt(event.recorded_at) })
+        }
+      }
+      await mutateDb((d) => d.bookings.push({ ...source, id, booking_ref: ref, driver_id: 'u-driver', host_account_id: 'ha-cafe', resource_id: resourceId, site_id: siteId, created_at: recordedAt(source.created_at) }))
+    }
   })
 }

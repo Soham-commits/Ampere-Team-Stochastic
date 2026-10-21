@@ -105,7 +105,7 @@ export interface Connector {
   standard: ConnectorStandard
   mode: ChargingMode
   rated_power_kw: number
-  cable: 'HOST_TETHERED' | 'DRIVER_REQUIRED'
+  cable: 'HOST_TETHERED' | 'DRIVER_REQUIRED' | 'HOST_OR_DRIVER'
   active: boolean
 }
 

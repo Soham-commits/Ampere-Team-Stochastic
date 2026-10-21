@@ -1,3 +1,4 @@
+import { equipmentOptions, isEquipmentChoice, type EquipmentChoice } from '../domain/equipment'
 import { guard, LIFECYCLE_LABEL, type BookingEvent, type BookingState, type EventSource, type QuoteSnapshot, type VehicleSnapshot } from '../domain/booking'
 import { achievableGridWh, compatibility, fromGridWh, fromTargetSoc, illustrativeHostProceeds, price, rangeBudget, routeConfidence, type EnergyEstimate } from '../domain/calc'
 import { modelById, userById } from '../domain/catalogue'
@@ -84,6 +85,7 @@ export async function createQuote(ctx: Ctx, input: QuoteInput): Promise<Quote> {
     plan: input.plan,
     connector_standard: connector.standard,
     charging_mode: connector.mode,
+    equipment_options: equipmentOptions(connector),
     effective_power_kw: compat.effective_power_kw,
     grid_wh: est.grid_wh,
     battery_wh: est.battery_wh,
@@ -131,6 +133,8 @@ export async function createQuote(ctx: Ctx, input: QuoteInput): Promise<Quote> {
 /* ---------------- Atomic hold ---------------- */
 
 export interface CreateBookingInput {
+  /** Required for new UI quotes; optional for older quotes and the jury protocol. */
+  equipment_choice?: EquipmentChoice
   quote_id: string
   idempotency_key: string
   policy_acceptance_version: string
@@ -150,19 +154,26 @@ export async function createBooking(ctx: Ctx, input: CreateBookingInput): Promis
   const actor = requireActor(ctx, 'DRIVER')
   if (!input.idempotency_key) throw new ApiFail('IDEMPOTENCY_KEY_REQUIRED', 'Idempotency-Key is required.', 400)
   if (input.policy_acceptance_version !== POLICY.version) throw new ApiFail('POLICY_NOT_ACCEPTED', 'Accept the current booking policy first.', 400)
+  if (input.equipment_choice !== undefined && !isEquipmentChoice(input.equipment_choice)) throw new ApiFail('INVALID_EQUIPMENT_CHOICE', 'Choose host cable or socket only.', 400)
+  const requestHash = JSON.stringify({ quote_id: input.quote_id, equipment_choice: input.equipment_choice ?? null })
   const idemKey = `${actor.id}:POST /api/bookings:${input.idempotency_key}`
   const quote0 = readDb().quotes.find((q) => q.id === input.quote_id && q.driver_id === actor.id)
   if (!quote0) throw new ApiFail('QUOTE_NOT_FOUND', 'Quote not found. Get a fresh quote.', 404)
+  if (quote0.snapshot.equipment_options && input.equipment_choice === undefined && input.source !== 'JURY_CONSOLE') {
+    throw new ApiFail('EQUIPMENT_CHOICE_REQUIRED', 'Confirm who provides the cable before requesting this slot.', 400)
+  }
 
   return withLocks([`resource:${quote0.resource_id}`], async () => {
     const db = readDb()
     const prior = db.idempotency[idemKey]
     if (prior) {
-      if (prior.request_hash !== input.quote_id) throw new ApiFail('IDEMPOTENCY_CONFLICT', 'This idempotency key was used with a different request.', 409)
+      if (prior.request_hash !== requestHash && !(input.equipment_choice === undefined && prior.request_hash === input.quote_id)) throw new ApiFail('IDEMPOTENCY_CONFLICT', 'This idempotency key was used with a different request.', 409)
       return prior.response as CreateBookingResponse
     }
     const now = serverNow()
     const quote = db.quotes.find((q) => q.id === input.quote_id)!
+    const quotedConnector = db.connectors.find((connector) => connector.id === quote.connector_id)
+    if (input.equipment_choice && (!quotedConnector || !equipmentOptions(quotedConnector).includes(input.equipment_choice))) throw new ApiFail('EQUIPMENT_NOT_SUPPORTED', 'This charger does not support the selected cable or socket arrangement.', 422)
     if (quote.consumed_by) throw new ApiFail('QUOTE_CONSUMED', 'This quote was already used.', 409)
     if (Date.parse(quote.valid_until) < now) throw new ApiFail('QUOTE_EXPIRED', 'This quote expired. Get a fresh quote.', 409)
     const site = db.sites.find((s) => s.id === quote.site_id)
@@ -197,6 +208,7 @@ export async function createBooking(ctx: Ctx, input: CreateBookingInput): Promis
           policy_version: quote.policy_version,
           quote: quote.snapshot,
           vehicle: quote.vehicle,
+          equipment_choice: input.equipment_choice,
           command_request_id: input.command_request_id,
         },
         { actor_id: actor.id, actor_role: 'DRIVER', source: input.source ?? 'UI', idempotency_key: idemKey, expected_sequence: 0 },
@@ -208,7 +220,7 @@ export async function createBooking(ctx: Ctx, input: CreateBookingInput): Promis
       d.bookings.push(header)
       const q = d.quotes.find((x) => x.id === quote.id)
       if (q) q.consumed_by = bookingId
-      d.idempotency[idemKey] = { request_hash: input.quote_id, response, created_at: event.recorded_at }
+      d.idempotency[idemKey] = { request_hash: requestHash, response, created_at: event.recorded_at }
     })
     return response
   })
@@ -277,6 +289,7 @@ function failIfExpired(s: BookingState) {
 /* ---------------- Host decision ---------------- */
 
 export interface ConfirmOptions {
+  equipment_choice?: EquipmentChoice
   expected_sequence?: number
   source?: EventSource
   reported_at?: string | null
@@ -290,10 +303,14 @@ export async function acceptBooking(ctx: Ctx, bookingId: string, opts: ConfirmOp
     if (!asHost && !asJury) throw new ApiFail('NOT_FOUND', 'Booking not found.', 404)
     failIfExpired(s)
     guardOrFail(s, 'HostConfirmed')
+    if (opts.equipment_choice !== undefined && !isEquipmentChoice(opts.equipment_choice)) throw new ApiFail('INVALID_EQUIPMENT_CHOICE', 'Choose what you will provide.', 400)
+    if (s.request.equipment_choice && opts.equipment_choice !== s.request.equipment_choice) throw new ApiFail('EQUIPMENT_CONFIRMATION_REQUIRED', 'Confirm the same cable or socket arrangement requested by the driver. If you cannot provide it, decline this request.', 422)
+    const supported = s.request.quote.equipment_options ?? ['HOST_CABLE']
+    if (opts.equipment_choice && !supported.includes(opts.equipment_choice)) throw new ApiFail('EQUIPMENT_NOT_SUPPORTED', 'This charger does not support the selected cable or socket arrangement.', 422)
     const event = appendEvent(
       bookingId,
       'HostConfirmed',
-      { checkout_deadline: new Date(now + POLICY.checkout_s * 1000).toISOString(), ...(asJury ? { delegated_host_account_id: h.host_account_id, jury_simulation: true } : {}) },
+      { checkout_deadline: new Date(now + POLICY.checkout_s * 1000).toISOString(), equipment_choice: opts.equipment_choice, ...(asJury ? { delegated_host_account_id: h.host_account_id, jury_simulation: true } : {}) },
       { actor_id: actor.id, actor_role: asJury ? 'JURY' : 'HOST', source: opts.source ?? 'UI', reported_at: opts.reported_at ?? null, idempotency_key: opts.idempotency_key },
     )
     return { booking_ref: h.booking_ref, lifecycle: 'host_confirmed' as const, event, checkout_deadline: event.payload.checkout_deadline }

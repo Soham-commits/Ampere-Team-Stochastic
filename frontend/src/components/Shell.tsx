@@ -14,7 +14,7 @@ export function Logo({ className, dark }: { className?: string; dark?: boolean }
         <g fill="none" stroke={dark ? '#d8dad4' : '#3a3d39'} strokeWidth="10">
           <rect x="176" y="96" width="160" height="320" rx="72" />
         </g>
-        <path d="M276 104 172 284h78l-22 124 112-188h-80z" fill="#2563eb" />
+        <path d="M276 104 172 284h78l-22 124 112-188h-80z" fill="#3560cf" />
       </svg>
       <span className="text-xl">Ampere</span>
     </span>
@@ -87,7 +87,7 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
   return (
     <div className="min-h-dvh lg:pl-[272px]">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-line bg-surface px-5 py-6 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col overflow-y-auto border-r border-line bg-surface px-5 py-6 lg:flex">
         <Link to={homePath(user)} className="px-2">
           <Logo />
         </Link>
@@ -133,7 +133,7 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
         </div>
       </aside>
 
-      <main className={cn('mx-auto w-full', !dark && 'max-w-6xl')}>{children}</main>
+      <main className={cn('mx-auto w-full', !dark && 'max-w-6xl', pathname === '/home' && 'home-scroll-area')}>{children}</main>
 
       {/* Mobile floating nav */}
       <div className="bottom-safe fixed inset-x-0 z-[900] flex items-center justify-center gap-3 px-4 lg:hidden">
@@ -170,7 +170,7 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
 
 export function Avatar({ user, className }: { user: User; className?: string }) {
   return (
-    <span className={cn('grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold text-white', className)} style={{ background: 'linear-gradient(135deg, #3b82f6, #1e40af)' }} aria-hidden>
+    <span className={cn('grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold text-white', className)} style={{ background: 'linear-gradient(135deg, #4b73db, #2345a1)' }} aria-hidden>
       {user.initials}
     </span>
   )
@@ -217,5 +217,5 @@ export function PageHeader({ title, subtitle, back, actions, user, className }: 
 }
 
 export function Page({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('px-4 pb-32 sm:px-6 lg:pb-12', className)}>{children}</div>
+  return <div className={cn('px-4 pb-44 sm:px-6 lg:pb-12', className)}>{children}</div>
 }

@@ -30,42 +30,42 @@ export default function Welcome() {
   }, [i])
   const s = SLIDES[i]
   return (
-    <div className="pt-safe pb-safe relative flex min-h-dvh flex-col overflow-hidden bg-night text-white">
+    <div className="pt-safe pb-safe relative flex min-h-dvh flex-col overflow-hidden bg-surface text-ink">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pt-6 lg:flex-row lg:items-center lg:gap-16 lg:px-12">
         <div className="relative z-10 lg:flex-1">
           <div className="flex gap-2" role="tablist" aria-label="Introduction">
             {SLIDES.map((_, k) => (
-              <button key={k} role="tab" aria-selected={k === i} aria-label={`Slide ${k + 1}`} onClick={() => setI(k)} className="h-1 flex-1 overflow-hidden rounded-full bg-white/15">
-                <span className={cn('block h-full rounded-full bg-white', k < i ? 'w-full' : k > i ? 'w-0' : '')} style={k === i ? { animation: `grow ${DURATION}ms linear forwards` } : undefined} />
+              <button key={k} role="tab" aria-selected={k === i} aria-label={`Slide ${k + 1}`} onClick={() => setI(k)} className="h-1 flex-1 overflow-hidden rounded-full bg-volt/15">
+                <span className={cn('block h-full rounded-full bg-volt', k < i ? 'w-full' : k > i ? 'w-0' : '')} style={k === i ? { animation: `grow ${DURATION}ms linear forwards` } : undefined} />
               </button>
             ))}
           </div>
           <style>{'@keyframes grow{from{width:0}to{width:100%}}'}</style>
           <div className="mt-10">
-            <Logo dark className="text-white" />
+            <Logo />
           </div>
           <AnimatePresence mode="wait">
             <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35 }}>
               <h1 className="mt-8 text-[44px] font-light leading-[1.05] tracking-tight sm:text-6xl">{s.title}</h1>
-              <p className="mt-4 max-w-md text-lg text-white/60">{s.body}</p>
+              <p className="mt-4 max-w-md text-lg text-ink-2">{s.body}</p>
             </motion.div>
           </AnimatePresence>
           <div className="mt-8 hidden gap-3 lg:flex">
-            <Button size="lg" className="!bg-white !text-ink hover:!bg-white/90" onClick={finish}>
+            <Button size="lg" className="!bg-volt !text-white" onClick={finish}>
               Get started
             </Button>
           </div>
         </div>
         <div className="relative -mx-6 mt-6 flex flex-1 items-end justify-center lg:mx-0 lg:mt-0 lg:h-[640px] lg:flex-none lg:basis-[380px]">
-          <CarExoskeleton soc={s.soc} charging={s.charging} dark className="h-[52vh] max-h-[560px] w-auto translate-y-10 lg:h-full lg:translate-y-0" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-night to-transparent lg:hidden" />
+          <CarExoskeleton soc={s.soc} charging={s.charging} className="h-[52vh] max-h-[560px] w-auto translate-y-10 lg:h-full lg:translate-y-0" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white to-transparent lg:hidden" />
         </div>
       </div>
       <div className="relative z-10 flex gap-3 px-6 pb-6 lg:hidden">
         <Button variant="night" size="lg" className="flex-1" onClick={finish}>
           Skip
         </Button>
-        <Button size="lg" className="flex-[2] !bg-white !text-ink" onClick={() => (i === SLIDES.length - 1 ? finish() : setI(i + 1))}>
+        <Button size="lg" className="flex-[2] !bg-volt !text-white" onClick={() => (i === SLIDES.length - 1 ? finish() : setI(i + 1))}>
           {i === SLIDES.length - 1 ? 'Get started' : 'Next'}
         </Button>
       </div>
