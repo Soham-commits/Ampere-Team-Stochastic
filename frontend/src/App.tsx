@@ -11,6 +11,7 @@ const TripPlanner = lazy(() => import('./features/trips/TripPlanner'))
 const Savings = lazy(() => import('./features/savings/Savings'))
 const Society = lazy(() => import('./features/community/Society'))
 const Connections = lazy(() => import('./features/connections/Connections'))
+
 const Welcome = lazy(() => import('./pages/Welcome'))
 const SignIn = lazy(() => import('./pages/SignIn'))
 const DriverHome = lazy(() => import('./pages/DriverHome'))

@@ -4,9 +4,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useNotifications } from '../app/notifications'
 import { useNow, useQuery, useSession } from '../app/hooks'
 import { MapView } from '../components/MapView'
-import { LifecycleChip, LifecycleTracker, siteIcon } from '../components/booking'
+import { siteIcon } from '../components/booking'
 import { Avatar, Page, PageHeader } from '../components/Shell'
-import { Button, Card, Chip, EmptyState, Range, SectionTitle } from '../components/ui'
+import { Button, Card, EmptyState, Range, SectionTitle } from '../components/ui'
 import { rangeBudget } from '../domain/calc'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
 import { DEMO_ORIGIN, POLICY } from '../domain/policy'
@@ -69,7 +69,7 @@ export default function DriverHome() {
 
   return (
     <>
-      <Page className="driver-home !pt-6 sm:!pt-8">
+      <Page className="driver-home !px-5 !pt-7 sm:!px-6 sm:!pt-8">
         <header className="mb-8 flex items-start justify-between gap-3">
           <h1 className="min-w-0 text-left text-[clamp(1.5rem,6.5vw,2rem)] font-medium leading-[1.15] tracking-[-0.04em]">
             {greeting},<br />
@@ -84,7 +84,7 @@ export default function DriverHome() {
             </Link>
           </div>
         </header>
-        <div className="lg:grid lg:grid-cols-[1.15fr_1fr] lg:gap-8">
+        <div className="lg:grid lg:grid-cols-[1.15fr_1fr] lg:gap-10">
           <div className="min-w-0">
             <div className="mb-3 flex items-center justify-between gap-2 text-xs font-semibold">
               <span>Your next charge</span>
@@ -99,7 +99,7 @@ export default function DriverHome() {
               <Link to="/discover" className="absolute bottom-8 right-4 z-[500] rounded-full bg-surface px-5 py-3 text-xs font-semibold shadow-soft">View chargers <ArrowRight className="ml-1 inline size-4" /></Link>
             </section>
 
-            <Link to="/discover" className="mt-4 flex min-h-[84px] items-center gap-3 rounded-[2rem] bg-volt px-5 py-3 text-white transition active:scale-[0.99]">
+            <Link to="/discover" className="mt-5 flex min-h-[88px] items-center gap-3 rounded-[2rem] bg-volt px-5 py-3 text-white transition active:scale-[0.99]">
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold tracking-tight">Find a reachable charger</span>
                 <span className="mt-0.5 block text-xs">Within {km(budget.range_budget_m)} on the road · your connectors only</span>
@@ -107,46 +107,46 @@ export default function DriverHome() {
               <span className="grid size-11 shrink-0 place-items-center rounded-full bg-ink text-white"><ArrowRight className="size-5" /></span>
             </Link>
 
-            <div className="mt-4 grid grid-cols-[1fr_1.35fr] gap-3">
-              <div className="min-h-[150px] rounded-[2rem] bg-volt-soft px-5 py-5">
-                <div className="flex items-baseline gap-1"><span className="text-4xl font-semibold tracking-tight">{soc}</span><span className="text-lg">%</span></div>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="min-w-0 min-h-[150px] rounded-[2rem] bg-volt-soft p-4 sm:p-5">
+                <div className="flex items-baseline gap-1"><span className="text-[clamp(1.75rem,8.5vw,2.25rem)] font-semibold tracking-tight">{soc}</span><span className="text-lg">%</span></div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-2"><BatteryCharging className="size-3.5" /> Battery level</div>
                 <Range className="mt-3" label="Battery level" value={soc} min={0} max={100} onChange={commitSoc} />
               </div>
-              <div className="min-h-[150px] rounded-[2rem] bg-ink px-5 py-5 text-white">
-                <div className="flex items-baseline gap-1 text-volt"><span className="text-4xl font-semibold tracking-tight">{(budget.range_budget_m / 1000).toFixed(1)}</span><span className="text-lg">km</span></div>
+              <div className="min-w-0 min-h-[150px] rounded-[2rem] bg-ink p-4 sm:p-5 text-white">
+                <div className="flex items-baseline gap-1 text-volt"><span className="text-[clamp(1.75rem,8.5vw,2.25rem)] font-semibold tracking-tight">{(budget.range_budget_m / 1000).toFixed(1)}</span><span className="text-lg">km</span></div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs text-white/65"><Gauge className="size-3.5" /> Range budget</div>
                 <p className="mt-3 text-[10px] leading-relaxed text-white/50">After {POLICY.reserve_pct}% reserve · ×{POLICY.uncertainty} uncertainty</p>
               </div>
             </div>
-            <Link to="/vehicle" className="mt-3 flex items-center gap-3 rounded-3xl border border-line p-4">
+            <Link to="/vehicle" className="mt-5 flex items-center gap-3 rounded-3xl border border-line p-4 sm:p-5">
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-volt-soft"><Target className="size-5 text-volt-strong" /></span>
               <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{model.make} {model.model} · {model.variant}</span><span className="block text-xs text-ink-2">Target {vehicle.target_soc}% · {(model.usable_battery_wh / 1000).toFixed(0)} kWh · AC {model.ac_limit_kw} kW</span><span className="block text-[10px] text-muted">{model.connectors.map((c) => CONNECTOR_LABEL[c.standard]).join(' · ')} · Demo profile</span></span>
               <ArrowRight className="size-4 shrink-0" />
             </Link>
             {soc <= POLICY.reserve_pct ? (
-              <Card className="mt-3 bg-amber-soft text-sm text-[#6d4710] shadow-none">At or below the {POLICY.reserve_pct}% reserve there is no discretionary range. Ampere won’t invent a reachable option — contact your roadside assistance.</Card>
+              <Card className="mt-4 bg-amber-soft text-sm text-[#6d4710] shadow-none">At or below the {POLICY.reserve_pct}% reserve there is no discretionary range. Ampere won’t invent a reachable option — contact your roadside assistance.</Card>
             ) : null}
           </div>
 
-          <div>
-            <SectionTitle action={<Link to="/bookings" className="text-sm font-semibold text-ink">View all</Link>}>Active bookings</SectionTitle>
+          <div className="mt-8 min-w-0 lg:mt-0">
+            <SectionTitle className="!mt-0 !mb-4" action={<Link to="/bookings" className="text-sm font-semibold text-ink">View all</Link>}>Active bookings</SectionTitle>
             {active.length ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {active.map(({ header, state }) => (
                   <Link key={header.id} to={`/booking/${header.id}`} className="block">
-                    <Card className="transition hover:shadow-float">
+                    <Card className="!p-5 transition hover:shadow-float">
                       <div className="flex items-center gap-3">
-                        <span className="grid size-11 place-items-center rounded-2xl bg-surface-2">{siteIcon(readDb().sites.find((s) => s.id === header.site_id)?.site_type ?? 'CAFE')}</span>
+                        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-surface-2">{siteIcon(readDb().sites.find((s) => s.id === header.site_id)?.site_type ?? 'CAFE')}</span>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate font-semibold">{state.request.site_name}</div>
-                          <div className="text-xs text-muted">
-                            {header.booking_ref} · {istDayLabel(state.request.start_at, now)} {istTime(state.request.start_at)}–{istTime(state.request.end_at)}
+                          <div className="font-semibold leading-snug">{state.request.site_name}</div>
+                          <div className="mt-1 text-xs leading-relaxed text-muted">
+                            {istDayLabel(state.request.start_at, now)} · {istTime(state.request.start_at)}–{istTime(state.request.end_at)}
                           </div>
+                          <p className="mt-2 text-xs font-medium text-volt-strong">{state.lifecycle === 'charging' ? 'Charging in progress' : state.lifecycle === 'on_the_way' ? 'On your way' : state.lifecycle === 'host_confirmed' ? 'Your space is reserved' : 'Waiting for your host'}</p>
                         </div>
-                        <LifecycleChip state={state} />
+                        <ArrowRight className="size-4 shrink-0 text-ink-2" />
                       </div>
-                      <LifecycleTracker state={state} compact />
                     </Card>
                   </Link>
                 ))}
@@ -155,14 +155,14 @@ export default function DriverHome() {
               <Card className="text-sm text-muted">No active bookings. Find a charger to request a slot.</Card>
             )}
 
-            <SectionTitle action={<Link to="/inbox" className="text-sm font-semibold text-ink">View all</Link>}>Recent alerts</SectionTitle>
-            <div className="grid grid-cols-2 gap-3">
+            <SectionTitle className="!mt-8 !mb-4" action={<Link to="/inbox" className="text-sm font-semibold text-ink">View all</Link>}>Recent alerts</SectionTitle>
+            <div className="grid grid-cols-2 gap-4">
               {items.slice(0, 4).map((n) => {
                 const booking = bookings.data?.find((b) => b.header.id === n.booking_id)
                 const title = n.event.event_type === 'PaymentCaptured' ? 'Payment received' : n.event.event_type === 'HostConfirmed' ? 'Space confirmed' : n.event.event_type === 'ChargingCompleted' ? 'Charge complete' : n.title
                 const Icon = n.event.event_type === 'PaymentCaptured' ? CreditCard : n.event.event_type === 'HostConfirmed' || n.event.event_type === 'ChargingCompleted' ? CircleCheck : Clock3
                 return (
-                  <Link key={n.event.event_id} to={`/booking/${n.booking_id}`} className="group flex min-w-0 flex-col rounded-[1.75rem] border border-line bg-surface-2 p-4 transition hover:-translate-y-0.5 hover:shadow-soft">
+                  <Link key={n.event.event_id} to={`/booking/${n.booking_id}`} className="group flex min-w-0 flex-col rounded-[1.75rem] border border-line bg-surface-2 p-4 sm:p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
                     <div className="flex items-start justify-between gap-2">
                       <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white text-volt shadow-soft"><Icon className="size-[18px]" /></span>
                       <span className="pt-1 text-right text-[10px] leading-tight text-muted">{relativeAge(n.event.recorded_at, now)}</span>
@@ -174,11 +174,6 @@ export default function DriverHome() {
                 )
               })}
               {!items.length ? <Card className="col-span-2 text-sm text-muted">Booking updates will appear here.</Card> : null}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Chip tone="outline">Simulated payments</Chip>
-              <Chip tone="outline">Simulated charging</Chip>
-              <Chip tone="outline">Synthetic Pune listings</Chip>
             </div>
           </div>
         </div>

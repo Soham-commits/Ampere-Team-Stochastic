@@ -87,7 +87,7 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
   return (
     <div className="min-h-dvh lg:pl-[272px]">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-line bg-surface px-5 py-6 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col overflow-y-auto border-r border-line bg-surface px-5 py-6 lg:flex">
         <Link to={homePath(user)} className="px-2">
           <Logo />
         </Link>
