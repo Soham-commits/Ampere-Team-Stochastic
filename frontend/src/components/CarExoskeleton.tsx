@@ -27,7 +27,7 @@ export function CarExoskeleton({
   const stroke = dark ? '#6d716a' : '#a9aca5'
   const strokeStrong = dark ? '#c7cbc2' : '#5f625c'
   const faint = dark ? '#3a3d39' : '#dcdcd6'
-  const volt = '#6fa35c'
+  const volt = '#2563eb'
   const low = soc <= 10
   const cellFill = low ? '#d4973a' : volt
   const cols = 4

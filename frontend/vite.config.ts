@@ -17,8 +17,8 @@ export default defineConfig({
         short_name: 'Ampere',
         description:
           'Find reachable, compatible EV chargers and book community chargers in Pune. Demo build: payments and charging are simulated.',
-        theme_color: '#f1f1ef',
-        background_color: '#f1f1ef',
+        theme_color: '#f8faff',
+        background_color: '#f8faff',
         display: 'standalone',
         orientation: 'portrait',
         categories: ['travel', 'navigation', 'utilities'],

@@ -14,7 +14,7 @@ export function Logo({ className, dark }: { className?: string; dark?: boolean }
         <g fill="none" stroke={dark ? '#d8dad4' : '#3a3d39'} strokeWidth="10">
           <rect x="176" y="96" width="160" height="320" rx="72" />
         </g>
-        <path d="M276 104 172 284h78l-22 124 112-188h-80z" fill="#6fa35c" />
+        <path d="M276 104 172 284h78l-22 124 112-188h-80z" fill="#2563eb" />
       </svg>
       <span className="text-xl">Ampere</span>
     </span>
@@ -93,13 +93,13 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
         </Link>
         <nav className="mt-8 flex flex-col gap-1" aria-label="Main">
           {items.map((it) => (
-            <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => cn('flex h-12 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold transition', isActive ? 'bg-ink text-white' : 'text-ink-2 hover:bg-surface-2')}>
+            <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => cn('flex h-12 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold transition', isActive ? 'bg-volt text-white' : 'text-ink-2 hover:bg-surface-2')}>
               {it.icon}
               {it.label}
             </NavLink>
           ))}
           {primaryRole(user) !== 'driver' && user.capabilities.includes('DRIVER') && primaryRole(user) !== 'jury' ? (
-            <NavLink to="/bookings" className={({ isActive }) => cn('flex h-12 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold transition', isActive ? 'bg-ink text-white' : 'text-ink-2 hover:bg-surface-2')}>
+            <NavLink to="/bookings" className={({ isActive }) => cn('flex h-12 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold transition', isActive ? 'bg-volt text-white' : 'text-ink-2 hover:bg-surface-2')}>
               <CalendarDays className="size-5" />
               My bookings
             </NavLink>
@@ -147,7 +147,7 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
               className={({ isActive }) =>
                 cn(
                   'flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-all duration-300',
-                  isActive ? (dark ? 'flex-[1.8] bg-surface text-ink' : 'flex-[1.8] bg-ink text-white') : dark ? 'flex-1 text-white/70 hover:text-white' : 'flex-1 text-ink-2 hover:text-ink',
+                  isActive ? (dark ? 'flex-[1.8] bg-surface text-ink' : 'flex-[1.8] bg-volt text-white') : dark ? 'flex-1 text-white/70 hover:text-white' : 'flex-1 text-ink-2 hover:text-ink',
                 )
               }
             >
@@ -160,7 +160,7 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <Link to={fab.to} aria-label={fab.label} className={cn('grid size-[60px] shrink-0 place-items-center rounded-full shadow-float transition active:scale-95', dark ? 'bg-surface text-ink' : 'bg-ink text-white')}>
+        <Link to={fab.to} aria-label={fab.label} className={cn('grid size-[60px] shrink-0 place-items-center rounded-full shadow-float transition active:scale-95', dark ? 'bg-surface text-ink' : 'bg-volt text-white')}>
           {fab.icon}
         </Link>
       </div>
@@ -169,9 +169,8 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
 }
 
 export function Avatar({ user, className }: { user: User; className?: string }) {
-  const hue = [...user.id].reduce((a, c) => a + c.charCodeAt(0), 0) % 360
   return (
-    <span className={cn('grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold text-white', className)} style={{ background: `linear-gradient(135deg, hsl(${hue} 22% 38%), hsl(${(hue + 40) % 360} 26% 22%))` }} aria-hidden>
+    <span className={cn('grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold text-white', className)} style={{ background: 'linear-gradient(135deg, #3b82f6, #1e40af)' }} aria-hidden>
       {user.initials}
     </span>
   )

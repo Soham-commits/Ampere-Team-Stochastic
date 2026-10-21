@@ -6,16 +6,16 @@
   --font-sans: 'Urbanist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 
-  --color-canvas: #efefec;
+  --color-canvas: #f8faff;
   --color-surface: #ffffff;
-  --color-surface-2: #f6f6f3;
+  --color-surface-2: #f1f5fb;
   --color-ink: #0e0f0e;
   --color-ink-2: #4c4f4a;
   --color-muted: #8a8d86;
-  --color-line: #e3e3de;
-  --color-volt: #6fa35c;
-  --color-volt-strong: #4f7f3f;
-  --color-volt-soft: #e3eedc;
+  --color-line: #e2e8f0;
+  --color-volt: #2563eb;
+  --color-volt-strong: #1d4ed8;
+  --color-volt-soft: #dbeafe;
   --color-amber: #d4973a;
   --color-amber-soft: #f7ead3;
   --color-danger: #c4543d;
@@ -118,8 +118,8 @@ button:disabled {
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: #4c6f41;
-  border: 4px solid rgb(111 163 92 / 0.35);
+  background: #2563eb;
+  border: 4px solid rgb(59 130 246 / 0.35);
   box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
   color: #fff;
   transition: transform 0.2s;
@@ -147,3 +147,5 @@ button:disabled {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
+
+.bg-ink .text-volt, .bg-night .text-volt, .bg-night-2 .text-volt { color: #93c5fd; }

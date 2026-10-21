@@ -9,7 +9,7 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'volt' | 'danger' | 'night'
 type Size = 'sm' | 'md' | 'lg'
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-ink text-white hover:bg-black active:bg-black/90 disabled:bg-ink/30',
+  primary: 'bg-volt text-white hover:bg-volt-strong active:bg-volt-strong disabled:bg-volt/40',
   secondary: 'bg-surface text-ink border border-line hover:bg-surface-2 disabled:text-muted',
   ghost: 'bg-transparent text-ink hover:bg-ink/5 disabled:text-muted',
   volt: 'bg-volt text-white hover:bg-volt-strong disabled:bg-volt/40',
@@ -154,7 +154,7 @@ export function EmptyState({ icon, title, children, action, className }: { icon?
 }
 
 export function Notice({ tone = 'neutral', title, children, icon, className, action }: { tone?: 'neutral' | 'volt' | 'amber' | 'danger'; title?: ReactNode; children?: ReactNode; icon?: ReactNode; className?: string; action?: ReactNode }) {
-  const t = { neutral: 'bg-surface-2 text-ink-2', volt: 'bg-volt-soft text-[#2f4f25]', amber: 'bg-amber-soft text-[#6d4710]', danger: 'bg-danger-soft text-[#7d2c1b]' }[tone]
+  const t = { neutral: 'bg-surface-2 text-ink-2', volt: 'bg-volt-soft text-[#1d4ed8]', amber: 'bg-amber-soft text-[#6d4710]', danger: 'bg-danger-soft text-[#7d2c1b]' }[tone]
   return (
     <div className={cn('flex gap-3 rounded-2xl p-3.5 text-sm', t, className)} role={tone === 'danger' ? 'alert' : 'status'}>
       <div className="mt-0.5 shrink-0">{icon ?? (tone === 'danger' || tone === 'amber' ? <CircleAlert className="size-4" /> : <Info className="size-4" />)}</div>

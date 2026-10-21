@@ -141,7 +141,7 @@ export default function Jury() {
             <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3">
               <span className="size-3 rounded-full bg-[#ff5f57]" />
               <span className="size-3 rounded-full bg-[#febc2e]" />
-              <span className="size-3 rounded-full bg-[#28c840]" />
+              <span className="size-3 rounded-full bg-[#3b82f6]" />
               <span className="ml-3 font-mono text-xs text-white/40">ampere://jury</span>
             </div>
             <div ref={scroller} className="h-[46dvh] overflow-y-auto px-4 py-3 font-mono text-[12.5px] leading-relaxed sm:h-[52dvh] lg:h-[60dvh]" role="log" aria-live="polite">
@@ -152,7 +152,7 @@ export default function Jury() {
                   </div>
                   {e.pending ? <div className="text-white/40">…</div> : null}
                   {e.lines.map((l, i) => (
-                    <div key={i} className={cn('whitespace-pre-wrap break-words', l.tone === 'err' ? 'text-[#ff8a75]' : l.tone === 'ok' ? 'text-[#9fd38a]' : l.tone === 'dim' ? 'text-white/40' : l.tone === 'accent' ? 'font-semibold text-[#f2c879]' : 'text-white/85')}>
+                    <div key={i} className={cn('whitespace-pre-wrap break-words', l.tone === 'err' ? 'text-[#ff8a75]' : l.tone === 'ok' ? 'text-[#93c5fd]' : l.tone === 'dim' ? 'text-white/40' : l.tone === 'accent' ? 'font-semibold text-[#f2c879]' : 'text-white/85')}>
                       {l.text}
                     </div>
                   ))}

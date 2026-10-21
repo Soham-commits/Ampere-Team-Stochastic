@@ -88,7 +88,7 @@ export function MapView({
         <FitView origin={origin} sites={sites} budgetM={budgetM} />
         <FlyTo target={selected ? { lat: selected.lat, lng: selected.lng } : null} />
         {budgetM > 0 ? (
-          <Circle center={[origin.lat, origin.lng]} radius={budgetM} interactive={false} pathOptions={{ color: '#6fa35c', weight: 1.5, dashArray: '6 8', fillColor: '#6fa35c', fillOpacity: 0.05 }} />
+          <Circle center={[origin.lat, origin.lng]} radius={budgetM} interactive={false} pathOptions={{ color: '#2563eb', weight: 1.5, dashArray: '6 8', fillColor: '#2563eb', fillOpacity: 0.05 }} />
         ) : null}
         <Marker position={[origin.lat, origin.lng]} icon={originIcon} keyboard={false}>
           <Tooltip className="amp-tip" direction="top" offset={[0, -10]}>
