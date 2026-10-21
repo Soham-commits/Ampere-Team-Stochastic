@@ -252,8 +252,8 @@ function initHero() {
 
   const phone = document.querySelector('[data-hero-phone]');
   gsap.matchMedia().add(`${DESKTOP} and (prefers-reduced-motion: no-preference)`, () => {
-    gsap.to(phone, {
-      yPercent: 15,
+    gsap.fromTo(phone, { yPercent: 8 }, {
+      yPercent: 18,
       ease: 'none',
       scrollTrigger: { trigger: '[data-hero]', start: 'top top', end: 'bottom top', scrub: 0.2 },
     });
@@ -307,7 +307,7 @@ function initTextFill() {
   const DIM = '#dddddd';
   const INK = '#111111';
   const BLUE = '#1A4BDB';
-  const st = { trigger: section, start: 'top 75%', end: 'bottom 85%', scrub: 0.6 };
+  const st = { trigger: section, start: 'top top', end: '+=120%', pin: true, anticipatePin: 1, scrub: 0.6 };
 
   gsap.set(chars, { color: DIM, opacity: 0.55 });
   if (reduced) {
@@ -775,7 +775,7 @@ function boot() {
   initParallax();
   initOdometers();
   initStories();
-  initResources();
+  if (document.querySelector('[data-res-track]')) initResources();
   initFaq();
   initFooter();
   initLineDraw();

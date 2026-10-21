@@ -290,7 +290,7 @@ a:hover .arrow-swap-inner { transform: translateX(0); }
 .hero-wordmark {
   position: absolute;
   left: 50%;
-  top: 24vh;
+  top: 16vh;
   width: 92vw;
   max-width: 1600px;
   height: auto;
@@ -377,6 +377,7 @@ a:hover .arrow-swap-inner { transform: translateX(0); }
   transform: translateX(-50%);
 }
 .phone-screen--blue .phone-home { background: rgba(255, 255, 255, 0.8); }
+.phone-img { display: block; width: 100%; height: auto; }
 .ph-status {
   display: flex;
   align-items: center;
@@ -593,7 +594,7 @@ a:hover .arrow-swap-inner { transform: translateX(0); }
   font-family: var(--font-heading);
   font-size: 5vw;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.2;
   letter-spacing: -0.03em;
   color: #111;
 }
