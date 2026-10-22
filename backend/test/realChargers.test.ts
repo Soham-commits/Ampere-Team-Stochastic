@@ -33,7 +33,8 @@ describe('real public chargers (Open Charge Map + OSRM road distances)', () => {
     const r = await search(30)
     const shown = real(r.data.results)
     const inBudget = snap.chargers.filter((c) => c.road_distance_m <= r.data.budget.range_budget_m)
-    expect(shown).toHaveLength(inBudget.length)
+    // One result per connector, so count sites.
+    expect(new Set(shown.map((s) => s.site.id)).size).toBe(inBudget.length)
     for (const s of shown) {
       const c = snap.chargers.find((x) => `site-ocm-${x.ocm_id}` === s.site.id)!
       expect(s.route.distance_m).toBe(c.road_distance_m)
