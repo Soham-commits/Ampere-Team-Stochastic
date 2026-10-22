@@ -1,5 +1,5 @@
 import { ArrowUpRight, CarFront, PlugZap, Route, Users, Wallet } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { WidgetCard } from './WidgetCard'
 import { cn } from '../lib/cn'
 
 type ToolArtwork = 'route' | 'savings' | 'society' | 'connections'
@@ -58,11 +58,7 @@ export function ProfileTools() {
         {PROFILE_TOOLS.map(({ to, title, text, artwork, icon: Icon, wide }) => {
           const featured = artwork === 'route'
           return (
-            <Link key={to} to={to} className={cn(
-              'group relative isolate min-w-0 overflow-hidden rounded-[1.75rem] border p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-4 active:scale-[0.98] motion-reduce:transform-none sm:p-5',
-              wide ? 'col-span-2 flex min-h-[160px] items-center gap-3' : 'flex min-h-[226px] flex-col',
-              featured ? 'border-[#2345a1] bg-[#102455] text-white' : artwork === 'society' ? 'border-line bg-white text-ink' : 'border-[#e0e9fa] bg-[#f1f5ff] text-ink',
-            )}>
+            <WidgetCard key={to} to={to} wide={!!wide} tone={featured ? 'featured' : artwork === 'society' ? 'white' : 'soft'} className={wide ? 'flex min-h-[160px] items-center gap-3' : 'flex min-h-[226px] flex-col'}>
               <div className={cn('relative z-10 min-w-0', wide ? 'w-[62%]' : 'flex flex-1 flex-col')}>
                 <span className={cn('mb-4 grid size-8 place-items-center rounded-xl', featured ? 'bg-white/10 text-[#bfdbfe]' : 'bg-white text-[#3560cf]')}><Icon className="size-4" /></span>
                 <h3 className="text-[17px] font-semibold leading-tight tracking-tight sm:text-lg">{title}</h3>
@@ -70,7 +66,7 @@ export function ProfileTools() {
               </div>
               <div className={cn('pointer-events-none', wide ? 'absolute bottom-0 right-2 top-3 w-[42%]' : 'relative mt-5 h-[92px] w-full')}><ToolIllustration kind={artwork} /></div>
               <span className={cn('absolute right-3 top-3 grid size-7 place-items-center rounded-full transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5', featured ? 'bg-white/10 text-white' : 'text-[#3560cf]')}><ArrowUpRight className="size-3.5" /></span>
-            </Link>
+            </WidgetCard>
           )
         })}
       </div>
