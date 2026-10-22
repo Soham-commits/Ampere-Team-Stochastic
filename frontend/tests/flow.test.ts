@@ -8,6 +8,7 @@ import { replay } from '../src/domain/booking'
 import { userById } from '../src/domain/catalogue'
 import { DEMO_ORIGIN, POLICY } from '../src/domain/policy'
 import { MIT_WPU_ORIGIN } from '../src/domain/mockLocation'
+import { filterChargers } from '../src/features/discovery/filterChargers'
 
 const as = (id: string) => ({ actor: userById(id)! })
 const driver = as('u-driver')
@@ -27,6 +28,16 @@ async function slot(resourceId: string, mins = 90) {
 }
 
 describe('AT17/AT18 strict discovery', () => {
+  it('searches eligible chargers by name, area and society type, with clear and no-match results', async () => {
+    const { results } = await searchChargers({ origin: MIT_WPU_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 4, radius_km: 4, bookable_only: true })
+    expect(filterChargers(results, '  CAFE durga  ').map((r) => r.site.id)).toEqual(['site-kothrud-cafe'])
+    expect(filterChargers(results, 'society').every((r) => r.site.site_type === 'RESIDENTIAL')).toBe(true)
+    expect(filterChargers(results, 'society')).toHaveLength(2)
+    expect(filterChargers(results, 'kothrud society').map((r) => r.site.id)).toEqual(['site-sahyadri-society'])
+    expect(filterChargers(results, 'Vaishali')).toEqual([])
+    expect(filterChargers(results, 'nonexistent charger')).toEqual([])
+    expect(filterChargers(results, '   ')).toBe(results)
+  })
   it('progressively reveals farther sites as battery rises and hides them again when it drops', async () => {
     const levels = [4, 10, 20, 40, 60, 80]
     const results = await Promise.all(levels.map((soc) => searchChargers({ origin: MIT_WPU_ORIGIN, model_id: 'vm-nexon-ev-demo', soc, radius_km: soc, bookable_only: true })))

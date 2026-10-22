@@ -13,6 +13,7 @@ import { cn } from '../lib/cn'
 import { istDayLabel, istTime, km, rupees } from '../lib/format'
 import { MIT_WPU_ORIGIN } from '../domain/mockLocation'
 import { useBookableChargers } from '../features/discovery/useBookableChargers'
+import { filterChargers } from '../features/discovery/filterChargers'
 import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
 import type { SearchResult } from '../server/discovery'
@@ -43,6 +44,7 @@ export default function Discover() {
   const connector = (params.get('connector') as ConnectorStandard | null) ?? undefined
   const siteType = (params.get('type') as SiteType | null) ?? undefined
   const view = params.get('view') === 'list' ? 'list' : 'map'
+  const query = params.get('q') ?? ''
   const model = modelId ? modelById(modelId) : undefined
   const fromConsole = params.has('lat') && params.has('model')
 
@@ -57,7 +59,7 @@ export default function Discover() {
   }
 
   const search = useBookableChargers({ modelId: model?.id, soc, connector, siteType })
-  const groups = useMemo(() => groupBySite(search.data?.results ?? []), [search.data])
+  const groups = useMemo(() => groupBySite(filterChargers(search.data?.results ?? [], query)), [search.data, query])
   const mapSites: MapSite[] = groups.map((g) => ({ site: g[0].site, reservable: g.some((r) => r.reservable), label: g[0].site.name }))
   const selectedGroup = groups.find((g) => g[0].site.id === selected)
   const d = search.data?.diagnostics
@@ -95,7 +97,9 @@ export default function Discover() {
       ) : search.error ? (
         <Notice tone="danger" title={search.error.message}>{search.error.code}</Notice>
       ) : groups.length === 0 ? (
-        <EmptyState icon={<MapPin className="size-6" />} title="No reachable, compatible charger">
+        query.trim() ? <EmptyState icon={<Search className="size-6" />} title="No matching chargers" action={<Button variant="secondary" onClick={() => setParam('q', null)}>Clear search</Button>}>
+          No reachable charger matches “{query.trim()}”. Try a charger name, area, café or society.
+        </EmptyState> : <EmptyState icon={<MapPin className="size-6" />} title="No reachable, compatible charger">
           Nothing within your {km(search.data!.budget.range_budget_m)} road budget supports your connector. Ampere won’t suggest a charger it can’t verify — if you’re low, contact your roadside assistance.
         </EmptyState>
       ) : (
@@ -113,9 +117,10 @@ export default function Discover() {
 
   const topBar = (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-surface px-4 text-left text-sm shadow-float">
+      <div role="search" className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-surface px-4 text-left text-sm shadow-float focus-within:ring-2 focus-within:ring-volt">
         <Search className="size-4 shrink-0 text-muted" />
-        <span className="truncate text-ink-2">{origin.label}</span>
+        <input type="search" aria-label="Search chargers" placeholder={`Search near ${origin.label}`} value={query} onChange={(event) => { setSelected(null); setParam('q', event.target.value || null) }} className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-muted sm:text-sm [&::-webkit-search-cancel-button]:appearance-none" />
+        {query ? <button type="button" aria-label="Clear charger search" onClick={() => { setSelected(null); setParam('q', null) }} className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"><X className="size-4" /></button> : null}
       </div>
       <IconButton label="Filters" onClick={() => setFilterOpen(true)} className="size-12 shadow-float">
         <SlidersHorizontal className="size-[18px]" />
