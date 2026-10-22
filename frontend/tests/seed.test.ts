@@ -36,3 +36,36 @@ it('new nearby chargers pass strict discovery and accept a normal booking reques
   const booking = await createBooking(actor, { quote_id: quote.id, idempotency_key: 'new-site-test', equipment_choice: 'HOST_CABLE', policy_acceptance_version: POLICY.version })
   expect(replay(readStream(booking.booking_id))!.request.site_id).toBe('site-riverside')
 })
+
+it('society wallboxes are discoverable near campus and require their residential host', async () => {
+  const { searchChargers } = await import('../src/server/discovery')
+  const { nextSlots } = await import('../src/server/availability')
+  const { createQuote, createBooking, acceptBooking } = await import('../src/server/bookings')
+  const { userById } = await import('../src/domain/catalogue')
+  const { MIT_WPU_ORIGIN } = await import('../src/domain/mockLocation')
+  const { POLICY } = await import('../src/domain/policy')
+  const { serverNow } = await import('../src/server/db')
+  const results = await searchChargers({ origin: MIT_WPU_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 4, radius_km: 4, bookable_only: true })
+  const societies = results.results.filter((r) => r.site.site_type === 'RESIDENTIAL')
+  expect(societies.map((r) => r.site.id)).toEqual(expect.arrayContaining(['site-sahyadri-society', 'site-prabhat-society']))
+  expect(societies.every((r) => r.site.location_precision === 'APPROXIMATE' && r.site.host_account_id === 'ha-home')).toBe(true)
+  const now = serverNow()
+  const start = nextSlots('res-sahyadri-society-1', 90, now + 15 * 60_000, now, 1)[0]
+  const driver = { actor: userById('u-driver')! }
+  const quote = await createQuote(driver, { connector_id: 'con-sahyadri-society-t2', model_id: 'vm-nexon-ev-demo', soc: 4, origin: MIT_WPU_ORIGIN, start_at: new Date(start).toISOString(), end_at: new Date(start + 90 * 60_000).toISOString(), plan: 'STANDARD', energy: { kind: 'GRID', grid_wh: 4000 } })
+  const booking = await createBooking(driver, { quote_id: quote.id, idempotency_key: 'society-test', equipment_choice: 'SOCKET_ONLY', policy_acceptance_version: POLICY.version })
+  await expect(acceptBooking({ actor: userById('u-host-cafe')! }, booking.booking_id, { equipment_choice: 'SOCKET_ONLY' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  await acceptBooking({ actor: userById('u-host-home')! }, booking.booking_id, { equipment_choice: 'SOCKET_ONLY' })
+  expect(replay(readStream(booking.booking_id))!.lifecycle).toBe('host_confirmed')
+})
+
+it('refreshes legacy café titles and past-visit labels without rewriting booking events', async () => {
+  const { mutateDb } = await import('../src/server/db')
+  const { bookingSiteName } = await import('../src/lib/bookingSiteName')
+  const sample = readDb().bookings.find((b) => b.site_id === 'site-cafe')!
+  const before = JSON.stringify(readStream(sample.id))
+  await mutateDb((db) => { db.sites.find((s) => s.id === 'site-cafe')!.name = 'Ember & Ohm Café' })
+  await seedDriverDemoBookings()
+  expect(bookingSiteName({ site_id: 'site-cafe', site_name: 'Ember & Ohm Café' })).toBe('Vaishali Café · demo')
+  expect(JSON.stringify(readStream(sample.id))).toBe(before)
+})

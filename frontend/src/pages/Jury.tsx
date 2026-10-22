@@ -1,3 +1,4 @@
+import { bookingSiteName } from '../lib/bookingSiteName'
 import { Copy, CornerDownLeft, ExternalLink, Map as MapIcon, RefreshCw, Terminal } from 'lucide-react'
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -218,7 +219,7 @@ export default function Jury() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="font-mono text-lg font-semibold">{stream.state.booking_ref}</div>
-                      <div className="text-xs text-muted">{stream.state.request.site_name}</div>
+                      <div className="text-xs text-muted">{bookingSiteName(stream.state.request)}</div>
                     </div>
                     <LifecycleChip state={stream.state} />
                   </div>

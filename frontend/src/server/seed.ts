@@ -52,7 +52,7 @@ export async function seedDemoBookings() {
     const q = quote(8000, 7.4, 'STANDARD', 'TYPE2')
     const t0 = start - 25 * 60_000
     const meta = (role: AppendMeta['actor_role'], actor: string, at: number): AppendMeta => ({ actor_id: actor, actor_role: role, source: 'UI', seed_recorded_at: iso(at) })
-    appendEvent(id, 'BookingRequested', { booking_ref: ref, site_id: 'site-cafe', site_name: 'Ember & Ohm Café', resource_id: 'res-cafe-2', connector_id: 'con-cafe2-t2', host_account_id: 'ha-cafe', driver_id: 'u-driver2', start_at: iso(start), end_at: iso(end), blocked_until: iso(end + POLICY.buffer_min * 60_000), host_response_deadline: iso(t0 + 120_000), policy_version: POLICY.version, quote: q, vehicle: { ...vehicle, route_m: 1800 } }, meta('DRIVER', 'u-driver2', t0))
+    appendEvent(id, 'BookingRequested', { booking_ref: ref, site_id: 'site-cafe', site_name: 'Vaishali Café · demo', resource_id: 'res-cafe-2', connector_id: 'con-cafe2-t2', host_account_id: 'ha-cafe', driver_id: 'u-driver2', start_at: iso(start), end_at: iso(end), blocked_until: iso(end + POLICY.buffer_min * 60_000), host_response_deadline: iso(t0 + 120_000), policy_version: POLICY.version, quote: q, vehicle: { ...vehicle, route_m: 1800 } }, meta('DRIVER', 'u-driver2', t0))
     appendEvent(id, 'HostConfirmed', { checkout_deadline: iso(t0 + 50_000 + 300_000) }, meta('HOST', 'u-host-cafe', t0 + 50_000))
     appendEvent(id, 'PaymentCaptured', { payment_attempt_id: uuid(), amount_paise: q.total_paise, provider: 'DEMO' }, { ...meta('DRIVER', 'u-driver2', t0 + 100_000), source: 'PROVIDER' })
     appendEvent(id, 'DriverDeparted', { range_budget_m: 63247, route_m: 1800, route_provider: 'Seeded demo road distance' }, meta('DRIVER', 'u-driver2', t0 + 150_000))
@@ -87,6 +87,13 @@ export async function seedDriverDemoBookings() {
         d.rules.push(...catalogue.rules.filter((r) => resourceIds.includes(r.resource_id)))
         d.checks.push(...catalogue.checks.filter((c) => missing.includes(c.site_id)))
         d.tariffs.push(...catalogue.tariffs.filter((t) => missing.includes(t.site_id)))
+      })
+    }
+    // Refresh seeded display names without rewriting immutable booking events.
+    const names = new Map(buildCatalogue(serverNow()).sites.map((site) => [site.id, site.name]))
+    if (readDb().sites.some((site) => names.has(site.id) && names.get(site.id) !== site.name)) {
+      await mutateDb((d) => {
+        for (const site of d.sites) if (names.has(site.id)) site.name = names.get(site.id)!
       })
     }
     // These sample AC wallboxes have sockets plus a host-supplied detachable cable.

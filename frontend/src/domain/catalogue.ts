@@ -43,7 +43,7 @@ export const USERS: User[] = [
     initials: 'RD',
     capabilities: ['DRIVER', 'HOST'],
     host_account_id: 'ha-cafe',
-    blurb: 'Host · Ember & Ohm Café and offices',
+    blurb: 'Host · Vaishali Café · demo and offices',
   },
   {
     id: 'u-host-home',
@@ -52,7 +52,7 @@ export const USERS: User[] = [
     initials: 'MJ',
     capabilities: ['DRIVER', 'HOST'],
     host_account_id: 'ha-home',
-    blurb: 'Host · Kalyani Nagar residence',
+    blurb: 'Host · Sahyadri & Prabhat societies',
   },
   {
     id: 'u-admin',
@@ -197,7 +197,7 @@ const SITE_SEEDS: SiteSeed[] = [
     site: {
       id: 'site-cafe',
       host_account_id: 'ha-cafe',
-      name: 'Ember & Ohm Café',
+      name: 'Vaishali Café · demo',
       site_type: 'CAFE',
       listing_state: 'ACTIVE',
       public_area: 'Koregaon Park Lane 6',
@@ -486,9 +486,9 @@ for (const [index, spec] of DEMO_CHARGING_SITE_SPECS.entries()) {
   const suffix = spec.id.slice('site-'.length)
   const template = SITE_SEEDS[0]
   SITE_SEEDS.push({
-    site: { ...template.site, id: spec.id, name: spec.name, site_type: spec.type, public_area: spec.area, approx_lat: spec.lat, approx_lng: spec.lng, route_fixture_m: spec.distance, access_summary: 'Dedicated visitor charging bay. Host confirmation required before travel.', amenities: index === 0 ? ['Café', 'Washroom', 'Wi-Fi'] : ['Covered bay', 'Washroom', 'Security desk'] },
-    priv: { exact_lat: spec.lat, exact_lng: spec.lng, full_address: `${spec.name}, ${spec.area}, Pune (synthetic demo address)`, entrance_instructions: 'Use the marked visitor entrance and ask the host for the charging bay.', contact_reference: 'Contact your host in Ampere (demo)' },
-    resources: [{ res: { id: `res-${suffix}-1`, label: 'Visitor bay · wallbox', rated_power_kw: 7.4, site_power_limit_kw: 7.4, current_status: 'AVAILABLE', status_source: 'HOST_UPDATE', reservable: true }, statusAgeMin: 3, connectors: [{ id: `con-${suffix}-t2`, standard: 'TYPE2', mode: 'AC', rated_power_kw: 7.4, cable: 'HOST_OR_DRIVER', active: true }], rule: { weekdays: ALL_DAYS, start_min: 0, end_min: 1440 } }],
+    site: { ...template.site, id: spec.id, name: spec.name, host_account_id: spec.hostAccountId ?? template.site.host_account_id, site_type: spec.type, location_precision: spec.type === 'RESIDENTIAL' ? 'APPROXIMATE' : 'EXACT', public_area: spec.area, approx_lat: spec.lat, approx_lng: spec.lng, route_fixture_m: spec.distance, access_summary: spec.type === 'RESIDENTIAL' ? 'Resident-shared wallbox in the society visitor parking. Host approval and security check-in required.' : 'Dedicated visitor charging bay. Host confirmation required before travel.', amenities: index === 0 ? ['Café', 'Washroom', 'Wi-Fi'] : ['Covered bay', 'Washroom', 'Security desk'] },
+    priv: { exact_lat: spec.lat + (spec.type === 'RESIDENTIAL' ? 0.0003 : 0), exact_lng: spec.lng, full_address: `${spec.name}, ${spec.area}, Pune (synthetic demo address)`, entrance_instructions: 'Use the marked visitor entrance and ask the host for the charging bay.', contact_reference: 'Contact your host in Ampere (demo)' },
+    resources: [{ res: { id: `res-${suffix}-1`, label: spec.type === 'RESIDENTIAL' ? 'Society visitor bay · shared wallbox' : 'Visitor bay · wallbox', rated_power_kw: 7.4, site_power_limit_kw: 7.4, current_status: 'AVAILABLE', status_source: 'HOST_UPDATE', reservable: true }, statusAgeMin: 3, connectors: [{ id: `con-${suffix}-t2`, standard: 'TYPE2', mode: 'AC', rated_power_kw: 7.4, cable: 'HOST_OR_DRIVER', active: true }], rule: { weekdays: ALL_DAYS, start_min: 0, end_min: 1440 } }],
     checks: ['APPROVED', 'APPROVED', 'APPROVED', 'APPROVED'],
   })
 }

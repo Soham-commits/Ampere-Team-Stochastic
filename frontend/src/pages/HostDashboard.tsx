@@ -1,3 +1,4 @@
+import { bookingSiteName } from '../lib/bookingSiteName'
 import { useState } from 'react'
 import { EquipmentConfirmationSheet } from '../features/booking-equipment/EquipmentConfirmationSheet'
 import { EQUIPMENT_LABELS } from '../domain/equipment'
@@ -56,7 +57,7 @@ export default function HostDashboard() {
                           {userById(header.driver_id)?.display_name} · {state.request.vehicle.model_label.split(' (')[0]}
                         </div>
                         <div className="text-sm text-muted">
-                          {state.request.site_name} · {istDayLabel(state.request.start_at, now)} {istTime(state.request.start_at)}–{istTime(state.request.end_at)}
+                          {bookingSiteName(state.request)} · {istDayLabel(state.request.start_at, now)} {istTime(state.request.start_at)}–{istTime(state.request.end_at)}
                         </div>
                         <div className="mt-1 text-sm text-muted">
                           {kwh(state.request.quote.grid_wh)} · {rupees(state.request.quote.total_paise)} · arriving at {state.request.vehicle.soc}%
@@ -107,7 +108,7 @@ export default function HostDashboard() {
                               {header.booking_ref} · {userById(header.driver_id)?.display_name}
                             </div>
                             <div className="text-sm text-muted">
-                              {state.request.site_name} · {istDayLabel(state.request.start_at, now)} {istTime(state.request.start_at)}
+                              {bookingSiteName(state.request)} · {istDayLabel(state.request.start_at, now)} {istTime(state.request.start_at)}
                             </div>
                           </div>
                           <LifecycleChip state={state} />

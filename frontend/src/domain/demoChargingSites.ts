@@ -6,21 +6,24 @@ interface DemoChargingSiteSpec {
   area: string
   lat: number
   lng: number
+  hostAccountId?: string
   distance: number | null
-  type: Extract<SiteType, 'CAFE' | 'OFFICE'>
+  type: Extract<SiteType, 'CAFE' | 'OFFICE' | 'RESIDENTIAL'>
 }
 
 /** Fictional sites span local and regional distances to exercise battery-aware discovery. */
 export const DEMO_CHARGING_SITE_SPECS: DemoChargingSiteSpec[] = [
-  { id: 'site-riverside', name: 'Riverside Coffee House', area: 'Koregaon Park riverside', lat: 18.5425, lng: 73.9002, distance: 2200, type: 'CAFE' },
+  { id: 'site-riverside', name: 'Vohuman Café · demo', area: 'Koregaon Park riverside', lat: 18.5425, lng: 73.9002, distance: 2200, type: 'CAFE' },
   { id: 'site-courtyard', name: 'The Courtyard Workspace', area: 'Kalyani Nagar business district', lat: 18.5468, lng: 73.9092, distance: 3300, type: 'OFFICE' },
-  { id: 'site-kothrud-cafe', name: 'Campus Corner Café', area: 'MIT College Road, Kothrud', lat: 18.5158, lng: 73.8167, distance: null, type: 'CAFE' },
+  { id: 'site-kothrud-cafe', name: 'Café Durga · demo', area: 'MIT College Road, Kothrud', lat: 18.5158, lng: 73.8167, distance: null, type: 'CAFE' },
   { id: 'site-paud-workspace', name: 'Paud Road Workspace', area: 'Paud Road, Kothrud', lat: 18.5105, lng: 73.8115, distance: null, type: 'OFFICE' },
-  { id: 'site-rambaug-charge', name: 'Rambaug Courtyard', area: 'Rambaug Colony, Kothrud', lat: 18.5077, lng: 73.8225, distance: null, type: 'CAFE' },
+  { id: 'site-rambaug-charge', name: 'Amruttulya Chaha Katta', area: 'Rambaug Colony, Kothrud', lat: 18.5077, lng: 73.8225, distance: null, type: 'CAFE' },
+  { id: 'site-sahyadri-society', name: 'Sahyadri Society', area: 'Kothrud residential community', lat: 18.5167, lng: 73.8118, distance: null, type: 'RESIDENTIAL', hostAccountId: 'ha-home' },
+  { id: 'site-prabhat-society', name: 'Prabhat Housing Society', area: 'Rambaug Colony residential community', lat: 18.5086, lng: 73.8161, distance: null, type: 'RESIDENTIAL', hostAccountId: 'ha-home' },
   { id: 'site-west-garden', name: 'West Garden Charging', area: 'Western Pune · demo site', lat: 18.5577, lng: 73.8048, distance: null, type: 'CAFE' },
   { id: 'site-north-square', name: 'North Square Workspace', area: 'Pune north corridor · demo site', lat: 18.6477, lng: 73.8048, distance: null, type: 'OFFICE' },
   { id: 'site-orchard-court', name: 'Orchard Charging Court', area: 'Outer Pune corridor · demo site', lat: 18.7177, lng: 73.8048, distance: null, type: 'CAFE' },
-  { id: 'site-corridor-stop', name: 'Corridor Coffee Stop', area: 'Regional north corridor · demo site', lat: 18.7977, lng: 73.8048, distance: null, type: 'CAFE' },
+  { id: 'site-corridor-stop', name: 'Puneri Misal & Chaha', area: 'Regional north corridor · demo site', lat: 18.7977, lng: 73.8048, distance: null, type: 'CAFE' },
   { id: 'site-valley-stop', name: 'Valley Charging Court', area: 'Regional north corridor · demo site', lat: 18.9477, lng: 73.8048, distance: null, type: 'CAFE' },
   { id: 'site-ridge-workspace', name: 'Ridge Workspace', area: 'Regional north corridor · demo site', lat: 19.1477, lng: 73.8048, distance: null, type: 'OFFICE' },
   { id: 'site-hill-court', name: 'Hill Charging Court', area: 'Regional north corridor · demo site', lat: 19.3577, lng: 73.8048, distance: null, type: 'CAFE' },

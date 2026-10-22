@@ -1,3 +1,4 @@
+import { bookingSiteName } from '../lib/bookingSiteName'
 import { EquipmentConfirmationSheet } from '../features/booking-equipment/EquipmentConfirmationSheet'
 import { EquipmentSummary } from '../features/booking-equipment/EquipmentSummary'
 import { Ban, CarFront, Check, Copy, CreditCard, FastForward, KeyRound, MapPin, Navigation, Play, Receipt, Square } from 'lucide-react'
@@ -59,7 +60,7 @@ export default function Booking() {
       <PageHeader
         back
         title={header.booking_ref}
-        subtitle={state.request.site_name}
+        subtitle={bookingSiteName(state.request)}
         actions={
           <button
             className="hidden items-center gap-1.5 rounded-full bg-surface px-3 py-2 text-xs font-semibold shadow-soft sm:inline-flex"

@@ -1,3 +1,4 @@
+import { bookingSiteName } from '../lib/bookingSiteName'
 import { ArrowRight, BatteryCharging, Bell, Gauge, CreditCard, CircleCheck, Clock3, Target, LocateFixed } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -136,7 +137,7 @@ export default function DriverHome() {
                       <div className="flex items-center gap-3">
                         <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-surface-2">{siteIcon(readDb().sites.find((s) => s.id === header.site_id)?.site_type ?? 'CAFE')}</span>
                         <div className="min-w-0 flex-1">
-                          <div className="font-semibold leading-snug">{state.request.site_name}</div>
+                          <div className="font-semibold leading-snug">{bookingSiteName(state.request)}</div>
                           <div className="mt-1 text-xs leading-relaxed text-muted">
                             {istDayLabel(state.request.start_at, now)} · {istTime(state.request.start_at)}–{istTime(state.request.end_at)}
                           </div>
@@ -165,7 +166,7 @@ export default function DriverHome() {
                       <span className="pt-1 text-right text-[10px] leading-tight text-muted">{relativeAge(n.event.recorded_at, now)}</span>
                     </div>
                     <h3 className="mt-5 text-sm font-semibold leading-snug tracking-tight">{title}</h3>
-                    <p className="mt-2 flex-1 text-[11px] leading-relaxed text-muted">{booking?.state.request.site_name ?? n.body}</p>
+                    <p className="mt-2 flex-1 text-[11px] leading-relaxed text-muted">{booking ? bookingSiteName(booking.state.request) : n.body}</p>
                     <span className="mt-4 inline-flex items-center justify-between text-[10px] font-medium text-volt-strong">View booking <ArrowRight className="size-3.5 transition group-hover:translate-x-0.5" /></span>
                   </Link>
                 )

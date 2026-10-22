@@ -1,3 +1,4 @@
+import { bookingSiteName } from '../lib/bookingSiteName'
 import { Wallet } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useQuery, useSession } from '../app/hooks'
@@ -28,7 +29,7 @@ export default function HostEarnings() {
               <Card className="flex items-center justify-between gap-3 !p-3.5">
                 <div className="min-w-0">
                   <div className="font-semibold">
-                    {r.header.booking_ref} · {r.state.request.site_name}
+                    {r.header.booking_ref} · {bookingSiteName(r.state.request)}
                   </div>
                   <div className="text-xs text-muted">
                     {istDateTime(r.state.completed_at!)} · {kwh(r.state.completed!.grid_wh)} · energy {rupees(r.energy_paise, { decimals: true })} − {rupees(r.commission_paise, { decimals: true })}

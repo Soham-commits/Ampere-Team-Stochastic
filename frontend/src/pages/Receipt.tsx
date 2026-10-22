@@ -1,3 +1,4 @@
+import { bookingSiteName } from '../lib/bookingSiteName'
 import { useParams } from 'react-router-dom'
 import { useBookingStream, useSession } from '../app/hooks'
 import { Page, PageHeader } from '../components/Shell'
@@ -38,7 +39,7 @@ export default function Receipt() {
             <Chip tone="amber" className="max-w-full self-start !whitespace-normal">Illustrative — not a tax invoice</Chip>
           </div>
           <div className="my-4 border-t border-dashed border-line" />
-          {row('Site', state.request.site_name)}
+          {row('Site', bookingSiteName(state.request))}
           {row('Connector', `${CONNECTOR_LABEL[q.connector_standard]} ${q.charging_mode} · ${q.effective_power_kw} kW`)}
           {row('Session', `${istDateTime(state.session!.started_at)} → ${istDateTime(state.completed_at!)}`)}
           {row('Metering source', 'DEMO (simulated, not a meter reading)')}
