@@ -2,6 +2,7 @@ import { bookingSiteName } from '../lib/bookingSiteName'
 import { useParams } from 'react-router-dom'
 import { useBookingStream, useSession } from '../app/hooks'
 import { Page, PageHeader } from '../components/Shell'
+import { DemoRevenueSplit, SPLIT_BOOKING_REF, SPLIT_TOTAL_PAISE } from '../components/DemoRevenueSplit'
 import { Card, Chip, EmptyState, Notice, Skeleton } from '../components/ui'
 import { illustrativeHostProceeds } from '../domain/calc'
 import { CONNECTOR_LABEL } from '../domain/catalogue'
@@ -63,6 +64,7 @@ export default function Receipt() {
             <p className="mt-2 text-xs text-muted">Before your electricity, maintenance and tax costs. No payout is executed in the demo.</p>
           </Card>
         ) : null}
+        {state.booking_ref === SPLIT_BOOKING_REF && q.total_paise === SPLIT_TOTAL_PAISE ? <DemoRevenueSplit /> : null}
         <Notice className="mt-4">Demo receipt for a synthetic booking. In the pilot, billing uses approved meter evidence and a provider-approved tax configuration.</Notice>
       </Page>
     </>
