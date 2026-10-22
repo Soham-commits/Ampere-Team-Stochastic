@@ -72,7 +72,7 @@ flowchart TB
   Real -- "seeded on boot" --> Engine
 ```
 
-The same React screens run in two modes. `npm run dev` at the root keeps everything in the browser: `frontend/src/server` simulates the server, database and realtime channel. The `backend/` build swaps those modules at build time for network clients with the same exports, so the screens are unchanged while bookings, holds and the console move to the server.
+The same React screens run in two modes. `npm run dev` at the root keeps everything in the browser: `frontend/src/server` simulates the server, database and realtime channel. The [`backend/`](backend/README.md) build swaps those modules at build time for network clients with the same exports, so the screens are unchanged while bookings, holds and the console move to the server.
 
 On the server the booking rules are not rewritten. The engine is the app's own `frontend/src/server` code, kept in memory and written through to Postgres. Postgres enforces the core rules as well: booking events cannot be updated or deleted, each stream's sequence must be contiguous and start with `BookingRequested`, and an exclusion constraint on `resource_holds` refuses two overlapping holds on one charger.
 

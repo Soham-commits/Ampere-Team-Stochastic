@@ -15,10 +15,7 @@ No double booking is enforced twice: by the booking engine, and by a Postgres ex
 
 ## How it fits together
 
-```
-browser (unchanged app + client/*)  ──RPC──▶  Hono server  ──▶  Postgres
-                                   ◀──SSE──   in-memory engine (frontend/src/server)
-```
+See the [architecture diagram](../README.md#architecture) in the main README for every component and a booking request end to end.
 
 The engine runs in memory, exactly as it does in the browser build. Every write it makes is queued and committed to Postgres before the request is answered. On startup, and after any failed write, memory is rebuilt from Postgres. The server is therefore a single instance by design.
 
