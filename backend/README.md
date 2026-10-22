@@ -35,9 +35,9 @@ npm start                # http://localhost:8787, app at /app/
 ```
 
 - **First start:** applies migrations and seeds the demo. Later starts load from Postgres.
-- **Phones:** devices on the same Wi-Fi can use the network address printed at startup. Browsers only allow geolocation over HTTPS or `localhost`, so use the area picker on a LAN address.
+- **Phones:** devices on the same Wi-Fi can use the network address printed at startup. Discovery searches from the fixed MIT-WPU origin, so no location permission is needed.
 - **Hot reload:** with `npm start` running, `npm run dev:web` serves the app at http://localhost:5173/app/.
-- **Reset:** the app's **Settings → Reset demo** reseeds the database for every device.
+- **Reset:** with the server running, `npm run reset` reseeds the database and refreshes every open device. The app itself has no reset button.
 
 Configuration comes from environment variables. See `example.env`.
 
@@ -60,7 +60,7 @@ OCM_API_KEY=<your key> npm run import:chargers
 - **Selection:** the importer keeps chargers within 20 km with connectors the car catalogue understands (CCS2, Type 2, CHAdeMO). It drops two-wheeler points and inconsistent records.
 - **Licence:** Open Charge Map data is CC BY 4.0. Each listing's note carries the attribution, and the app shows it on the charger page.
 
-At 4% battery (4 km budget), every real charger is outside the road budget and hidden. Raising the battery shows them with their measured distance. From a Baner origin, some are inside the budget and some outside:
+Real chargers are directory listings that Ampere cannot reserve, so the app's Discover screen (bookable chargers only) leaves them out. They appear in the jury console and in the `searchChargers` API. At 4% battery (4 km budget), every real charger is outside the road budget and hidden. Raising the battery shows them with their measured distance. From a Baner origin, some are inside the budget and some outside:
 
 ```
 TICKET|Tata Nexon EV|4|18.5590|73.7868|CCS2
@@ -88,6 +88,5 @@ npm run typecheck
 
 - **Instances:** one server instance only. The engine is in memory with write-through.
 - **Accounts:** synthetic demo accounts. Anyone can pick any of them, but tokens still enforce ownership per tab.
-- **Shared controls:** *Advance clock* and *Reset demo* affect every device. Clock steps are audited.
+- **Shared controls:** the booking page's demo clock step and `npm run reset` affect every device. Clock steps are audited.
 - **Simulated values:** payments, metering and payouts remain simulated.
-- **Settings text:** the app's Settings page still says it runs entirely in the browser. That text belongs to the unchanged UI.
