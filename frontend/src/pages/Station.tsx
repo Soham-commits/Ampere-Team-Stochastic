@@ -12,11 +12,12 @@ import { slotProblem } from '../server/availability'
 import { Page, PageHeader } from '../components/Shell'
 import { Button, Card, Chip, EmptyState, Notice, Range, SectionTitle, Segmented, Skeleton, useAction } from '../components/ui'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
-import { DEMO_ORIGIN, POLICY } from '../domain/policy'
+import { POLICY } from '../domain/policy'
 import type { ConnectorStandard, Plan } from '../domain/types'
 import { cn } from '../lib/cn'
 import { countdown, istTime, km, kwh, minutes, rupees } from '../lib/format'
 import { uuid } from '../lib/ids'
+import { startingOrigin } from '../lib/deviceLocation'
 import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
 import type { Quote } from '../server/db'
@@ -33,7 +34,7 @@ export default function Station() {
   const { run, busy } = useAction()
 
   const saved = readDb().last_origin[user.id]
-  const origin = params.get('lat') && params.get('lng') ? { lat: Number(params.get('lat')), lng: Number(params.get('lng')) } : saved ?? DEMO_ORIGIN
+  const origin = startingOrigin(saved)
   const modelId = params.get('model') ?? vehicle?.model_id
   const soc = params.get('soc') !== null ? Number(params.get('soc')) : vehicle?.soc
   const connectorFilter = (params.get('connector') as ConnectorStandard | null) ?? undefined
@@ -41,7 +42,7 @@ export default function Station() {
 
   const detail = useQuery(() => api.siteDetail(siteId!), [siteId])
   // Eligibility uses the exact discovery filter; a deep link cannot bypass it.
-  const search = useQuery(() => (model && soc !== undefined ? api.searchChargers({ origin, model_id: model.id, soc, connector: connectorFilter }) : Promise.resolve({ ok: false as const, error: { code: 'INPUT_REQUIRED', message: 'Choose a car first.' }, request_id: '' })), [model?.id, soc, origin.lat, origin.lng, connectorFilter])
+  const search = useQuery(() => (model && soc !== undefined ? api.searchChargers({ bookable_only: true, origin, model_id: model.id, soc, connector: connectorFilter }) : Promise.resolve({ ok: false as const, error: { code: 'INPUT_REQUIRED', message: 'Choose a car first.' }, request_id: '' })), [model?.id, soc, origin.lat, origin.lng, connectorFilter])
   const eligible = useMemo(() => (search.data?.results ?? []).filter((r) => r.site.id === siteId), [search.data, siteId])
   const options = useMemo(() => eligible.filter((r) => r.reservable).flatMap((r) => r.connectors.map((c) => ({ ...c, resource_id: r.resource_id, resource_label: r.resource_label }))), [eligible])
 
@@ -116,6 +117,7 @@ export default function Station() {
       </>
     )
   const { site, tariff, checks } = detail.data
+  const eligibleResources = detail.data?.resources.filter((r) => options.some((o) => o.resource_id === r.id)) ?? []
   const res0 = eligible[0]
   const directory = site.source_kind === 'DIRECTORY'
   const quoteValid = quote ? Date.parse(quote.valid_until) - now : 0
@@ -129,8 +131,8 @@ export default function Station() {
           <div>
             {!directory ? (
               <>
-                <div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-lg font-medium">Choose your charging bay</h2><span className="text-xs text-muted">{detail.data.resources.length} {detail.data.resources.length === 1 ? 'bay' : 'bays'}</span></div>
-                <ChargingBayPlan bays={detail.data.resources.map((r) => {
+                <div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-lg font-medium">Choose your charging bay</h2><span className="text-xs text-muted">{eligibleResources.length} {eligibleResources.length === 1 ? 'bay' : 'bays'}</span></div>
+                <ChargingBayPlan bays={eligibleResources.map((r) => {
                   const compatible = options.some((o) => o.resource_id === r.id)
                   const problem = start ? slotProblem(r.id, Date.parse(start), Date.parse(start) + duration * 60_000, now) : null
                   return { id: r.id, label: r.label, selectable: compatible && !problem, note: !compatible ? 'Not eligible for your car' : problem === 'SLOT_UNAVAILABLE' ? 'Reserved for this time' : problem ? 'Pick a different time' : start ? 'Free for selected time' : 'Choose a start time' }
@@ -191,7 +193,7 @@ export default function Station() {
             <SectionTitle>Connectors</SectionTitle>
             <div className="grid gap-2 sm:grid-cols-2">
               {detail.data.resources.flatMap((r) =>
-                r.connectors.map((c) => {
+                r.connectors.filter((c) => options.some((o) => o.id === c.id)).map((c) => {
                   const ok = options.find((o) => o.id === c.id)
                   return (
                     <button

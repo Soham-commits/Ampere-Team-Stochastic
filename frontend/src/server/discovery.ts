@@ -12,6 +12,7 @@ export interface SearchInput {
   model_id: string
   soc: number
   connector?: ConnectorStandard
+  bookable_only?: boolean
   radius_km?: number
   site_type?: SiteType
 }
@@ -147,6 +148,7 @@ export async function searchChargers(input: SearchInput): Promise<SearchResponse
       const reservable = res.reservable && site.source_kind !== 'DIRECTORY'
       const travel = route.duration_s * 1000
       const slot = reservable ? nextSlots(res.id, 60, now + travel + (POLICY.host_response_s + POLICY.checkout_s) * 1000, now, 1)[0] : undefined
+      if (input.bookable_only && (!reservable || !slot)) continue
       const fresh = freshness(res.status_source, res.status_observed_at, now)
       results.push({
         site: publicSite(site),

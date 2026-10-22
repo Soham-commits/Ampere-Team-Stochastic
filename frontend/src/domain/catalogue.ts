@@ -480,12 +480,15 @@ const SITE_SEEDS: SiteSeed[] = [
 ]
 
 // Additional synthetic sites keep the demo varied without bypassing discovery rules.
-export const EXTRA_DEMO_SITE_IDS = ['site-riverside', 'site-courtyard']
+export const EXTRA_DEMO_SITE_IDS = ['site-riverside', 'site-courtyard', 'site-kothrud-cafe', 'site-paud-workspace', 'site-rambaug-charge']
 for (const [index, spec] of [
   { id: 'site-riverside', name: 'Riverside Coffee House', area: 'Koregaon Park riverside', lat: 18.5425, lng: 73.9002, distance: 2200, type: 'CAFE' as const },
   { id: 'site-courtyard', name: 'The Courtyard Workspace', area: 'Kalyani Nagar business district', lat: 18.5468, lng: 73.9092, distance: 3300, type: 'OFFICE' as const },
+  { id: 'site-kothrud-cafe', name: 'Campus Corner Café', area: 'MIT College Road, Kothrud', lat: 18.5158, lng: 73.8167, distance: null, type: 'CAFE' as const },
+  { id: 'site-paud-workspace', name: 'Paud Road Workspace', area: 'Paud Road, Kothrud', lat: 18.5105, lng: 73.8115, distance: null, type: 'OFFICE' as const },
+  { id: 'site-rambaug-charge', name: 'Rambaug Courtyard', area: 'Rambaug Colony, Kothrud', lat: 18.5077, lng: 73.8225, distance: null, type: 'CAFE' as const },
 ].entries()) {
-  const suffix = index === 0 ? 'riverside' : 'courtyard'
+  const suffix = spec.id.slice('site-'.length)
   const template = SITE_SEEDS[0]
   SITE_SEEDS.push({
     site: { ...template.site, id: spec.id, name: spec.name, site_type: spec.type, public_area: spec.area, approx_lat: spec.lat, approx_lng: spec.lng, route_fixture_m: spec.distance, access_summary: 'Dedicated visitor charging bay. Host confirmation required before travel.', amenities: index === 0 ? ['Café', 'Washroom', 'Wi-Fi'] : ['Covered bay', 'Washroom', 'Security desk'] },

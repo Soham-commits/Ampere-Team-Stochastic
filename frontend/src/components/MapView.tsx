@@ -25,29 +25,19 @@ export interface MapSite {
   label: string
 }
 
-function FitView({ origin, sites, budgetM, compact }: { origin: LatLng; sites: MapSite[]; budgetM: number; compact: boolean }) {
+function OriginView({ origin }: { origin: LatLng }) {
   const map = useMap()
-  const key = `${origin.lat},${origin.lng},${sites.map((s) => s.site.id).join()},${budgetM}`
   useEffect(() => {
-    const fit = () => {
-      const el = map.getContainer()
-      if (!el.clientWidth || !el.clientHeight) return
-      map.invalidateSize()
-      const pts = [L.latLng(origin.lat, origin.lng), ...sites.map((s) => L.latLng(s.site.lat, s.site.lng))]
-      const bounds = L.latLngBounds(pts)
-      // With no pins, show the (illustrative) budget ring instead, capped to keep the view local.
-      if (!sites.length && budgetM > 0) bounds.extend(L.latLng(origin.lat, origin.lng).toBounds(Math.min(budgetM, 6000) * 2))
-      map.fitBounds(bounds.pad(0.15), { paddingTopLeft: [24, compact ? 60 : 190], paddingBottomRight: [24, compact ? 45 : 200], maxZoom: 15 })
-    }
-    const raf = requestAnimationFrame(fit)
-    const ro = new ResizeObserver(() => fit())
-    ro.observe(map.getContainer())
+    map.setView([origin.lat, origin.lng], 14, { animate: false })
+    const resize = () => map.invalidateSize()
+    const raf = requestAnimationFrame(resize)
+    const observer = new ResizeObserver(resize)
+    observer.observe(map.getContainer())
     return () => {
       cancelAnimationFrame(raf)
-      ro.disconnect()
+      observer.disconnect()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [map, origin.lat, origin.lng])
   return null
 }
 
@@ -99,7 +89,7 @@ export function MapView({
           maxZoom={19}
           eventHandlers={{ tileerror: () => setTileErrors((n) => n + 1), tileload: () => setTileErrors(0) }}
         />
-        <FitView origin={origin} sites={sites} budgetM={budgetM} compact={compact} />
+        <OriginView origin={origin} />
         <FlyTo target={selected ? { lat: selected.lat, lng: selected.lng } : null} compact={compact} />
         {!compact ? <MapZoomControls /> : null}
         {budgetM > 0 ? (

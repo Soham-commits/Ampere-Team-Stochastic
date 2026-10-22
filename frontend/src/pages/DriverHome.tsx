@@ -1,4 +1,4 @@
-import { ArrowRight, BatteryCharging, Bell, Gauge, MapPin, CreditCard, CircleCheck, Clock3, Target } from 'lucide-react'
+import { ArrowRight, BatteryCharging, Bell, Gauge, CreditCard, CircleCheck, Clock3, Target, LocateFixed } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useNotifications } from '../app/notifications'
@@ -9,10 +9,12 @@ import { Avatar, Page, PageHeader } from '../components/Shell'
 import { Button, Card, EmptyState, Range, SectionTitle } from '../components/ui'
 import { rangeBudget } from '../domain/calc'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
-import { DEMO_ORIGIN, POLICY } from '../domain/policy'
+import { POLICY } from '../domain/policy'
 import { istDayLabel, istTime, km, relativeAge } from '../lib/format'
+import { startingOrigin } from '../lib/deviceLocation'
 import { api } from '../server/api'
 import { readDb } from '../server/db'
+
 
 export function useMyVehicle() {
   const user = useSession()
@@ -41,9 +43,9 @@ export default function DriverHome() {
     timer.current = setTimeout(() => vehicle && api.updateVehicle(vehicle.id, { soc: v }), 350)
   }
 
-  const origin = readDb().last_origin[user.id] ?? DEMO_ORIGIN
+  const origin = startingOrigin(readDb().last_origin[user.id])
   const search = useQuery(
-    () => api.searchChargers({ origin, model_id: vehicle?.model_id ?? '', soc: soc ?? 0 }),
+    () => api.searchChargers({ bookable_only: true, origin, model_id: vehicle?.model_id ?? '', soc: soc ?? 0 }),
     [origin.lat, origin.lng, vehicle?.model_id, soc],
   )
   const mapSites = [...new Map((search.data?.results ?? []).map((r) => [r.site.id, {
@@ -88,13 +90,13 @@ export default function DriverHome() {
           <div className="min-w-0">
             <div className="mb-3 flex items-center justify-between gap-2 text-xs font-semibold">
               <span>Your next charge</span>
-              <span className="flex min-w-0 items-center gap-1 text-ink-2"><MapPin className="size-3.5 shrink-0" /><span className="truncate">{origin.label}</span></span>
+              <span className="flex min-w-0 items-center gap-1 text-ink-2"><LocateFixed className="size-3.5 shrink-0" /><span className="truncate">{origin.label}</span></span>
             </div>
             <section aria-label="Reachable chargers map" className="relative isolate h-[clamp(17rem,76vw,24rem)] overflow-hidden rounded-[2.5rem] bg-night">
-              <MapView origin={origin} budgetM={budget.range_budget_m} sites={mapSites} selectedId={null} onSelect={(id) => navigate(`/station/${id}`)} compact className="absolute inset-0" />
+              {Number.isFinite(origin.lat) ? <MapView origin={origin} budgetM={budget.range_budget_m} sites={mapSites} selectedId={null} onSelect={(id) => navigate(`/station/${id}`)} compact className="absolute inset-0" /> : <div className="flex h-full items-center justify-center bg-surface-2 px-6 text-center text-sm text-ink-2">Allow location access or choose a starting point to find compatible chargers.</div>}
               <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] bg-gradient-to-b from-white/95 to-transparent p-5 text-[#0e0f0e]">
                 <p className="text-[11px] font-medium text-[#526079]">Compatible with your {model.make} {model.model}</p>
-                <p className="mt-1 text-lg font-semibold tracking-tight">{search.loading ? 'Finding reachable chargers…' : search.error ? 'Charger search unavailable' : `${mapSites.length} reachable demo ${mapSites.length === 1 ? 'site' : 'sites'}`}</p>
+                <p className="mt-1 text-lg font-semibold tracking-tight">{!Number.isFinite(origin.lat) ? 'Choose your starting point' : search.loading ? 'Finding reachable chargers…' : search.error ? 'Charger search unavailable' : `${mapSites.length} reachable demo ${mapSites.length === 1 ? 'site' : 'sites'}`}</p>
               </div>
               <Link to="/discover" className="absolute bottom-8 right-4 z-[500] rounded-full bg-surface px-5 py-3 text-xs font-semibold shadow-soft">View chargers <ArrowRight className="ml-1 inline size-4" /></Link>
             </section>

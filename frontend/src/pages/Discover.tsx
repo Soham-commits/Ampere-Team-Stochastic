@@ -1,17 +1,17 @@
 import { SolarBadge } from '../features/solar/SolarBadge'
-import { ChevronRight, Clock3, Zap, List, LocateFixed, Map as MapIcon, MapPin, Navigation, Search, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronRight, Clock3, Zap, List, Map as MapIcon, MapPin, Navigation, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMediaQuery, useNow, useQuery, useSession } from '../app/hooks'
 import { SITE_TYPE_LABEL, StatusLine } from '../components/booking'
 import { ChargingBayPlan } from '../components/ChargingBayPlan'
 import { MapView, type MapSite } from '../components/MapView'
-import { Button, Card, Chip, EmptyState, Field, IconButton, inputClass, Notice, Range, Segmented, Sheet, Skeleton } from '../components/ui'
+import { Button, Card, Chip, EmptyState, Field, IconButton, Notice, Range, Segmented, Sheet, Skeleton } from '../components/ui'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
-import { DEMO_ORIGIN, PRESET_AREAS } from '../domain/policy'
 import type { ConnectorStandard, SiteType } from '../domain/types'
 import { cn } from '../lib/cn'
 import { istDayLabel, istTime, km, rupees } from '../lib/format'
+import { startingOrigin } from '../lib/deviceLocation'
 import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
 import { readDb } from '../server/db'
@@ -37,9 +37,9 @@ export default function Discover() {
   const desktop = useMediaQuery('(min-width: 1024px)')
   const now = useNow(15000)
 
-  // Inputs: query params (console deep link) override the saved car and origin.
+  // Console deep links can override car inputs; the mock origin stays at MIT-WPU.
   const saved = readDb().last_origin[user.id]
-  const origin = params.get('lat') && params.get('lng') ? { lat: Number(params.get('lat')), lng: Number(params.get('lng')), label: `${Number(params.get('lat')).toFixed(4)}, ${Number(params.get('lng')).toFixed(4)}` } : saved ?? DEMO_ORIGIN
+  const origin = startingOrigin(saved)
   const modelId = params.get('model') ?? vehicle?.model_id ?? null
   const soc = params.get('soc') !== null ? Number(params.get('soc')) : vehicle?.soc ?? null
   const connector = (params.get('connector') as ConnectorStandard | null) ?? undefined
@@ -49,7 +49,6 @@ export default function Discover() {
   const fromConsole = params.has('lat') && params.has('model')
 
   const [selected, setSelected] = useState<string | null>(null)
-  const [locOpen, setLocOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
 
   const setParam = (k: string, v: string | null) => {
@@ -60,7 +59,7 @@ export default function Discover() {
   }
 
   const search = useQuery(
-    () => (model && soc !== null ? api.searchChargers({ origin, model_id: model.id, soc, connector, site_type: siteType }) : Promise.resolve({ ok: false as const, error: { code: 'INPUT_REQUIRED', message: 'Car, battery and origin are required.' }, request_id: '' })),
+    () => (model && soc !== null ? api.searchChargers({ bookable_only: true, origin, model_id: model.id, soc, connector, site_type: siteType }) : Promise.resolve({ ok: false as const, error: { code: 'INPUT_REQUIRED', message: 'Car, battery and origin are required.' }, request_id: '' })),
     [origin.lat, origin.lng, model?.id, soc, connector, siteType],
   )
   const groups = useMemo(() => groupBySite(search.data?.results ?? []), [search.data])
@@ -93,7 +92,7 @@ export default function Discover() {
     <div className="space-y-3">
       {fromConsole ? (
         <Notice tone="neutral" title="Synced from the jury console" action={<Button size="sm" variant="secondary" onClick={() => nav('/discover', { replace: true })}>Use my car instead</Button>}>
-          Same inputs and the same strict filter as the TICKET command.
+          Car and battery inputs from the console, with the mock location fixed at MIT-WPU.
         </Notice>
       ) : null}
       {search.loading && !search.data ? (
@@ -118,11 +117,11 @@ export default function Discover() {
   )
 
   const topBar = (
-    <div className="flex items-center gap-2">
-      <button onClick={() => setLocOpen(true)} className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-surface px-4 text-left text-sm shadow-float">
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-surface px-4 text-left text-sm shadow-float">
         <Search className="size-4 shrink-0 text-muted" />
         <span className="truncate text-ink-2">{origin.label}</span>
-      </button>
+      </div>
       <IconButton label="Filters" onClick={() => setFilterOpen(true)} className="size-12 shadow-float">
         <SlidersHorizontal className="size-[18px]" />
       </IconButton>
@@ -131,19 +130,6 @@ export default function Discover() {
 
   const sheets = (
     <>
-      <LocationSheet
-        open={locOpen}
-        onClose={() => setLocOpen(false)}
-        onPick={async (o) => {
-          await api.setOrigin(o)
-          const p = new URLSearchParams(params)
-          p.delete('lat')
-          p.delete('lng')
-          setParams(p, { replace: true })
-          setSelected(null)
-          setLocOpen(false)
-        }}
-      />
       <Sheet open={filterOpen} onClose={() => setFilterOpen(false)} title="Search inputs">
         <div className="space-y-5">
           <Field label={`Battery now: ${soc}%`} hint="Entered by you — not live vehicle telemetry.">
@@ -327,55 +313,5 @@ function SelectedCard({ group, now, onClose }: { group: SearchResult[]; now: num
       </div>
       <p className="mt-3 text-[10px] text-white/70">Demo layout · {r.status.freshness === 'STALE' ? 'status is stale; request a future slot' : r.status.freshness === 'UNKNOWN' ? 'live status unknown' : 'host confirmation required'}</p>
     </div>
-  )
-}
-
-function LocationSheet({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (o: { lat: number; lng: number; label: string }) => void }) {
-  const [geoError, setGeoError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [lat, setLat] = useState('')
-  const [lng, setLng] = useState('')
-  const locate = () => {
-    if (!('geolocation' in navigator)) return setGeoError('Location is not available in this browser. Pick an area below.')
-    setBusy(true)
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        setBusy(false)
-        onPick({ lat: p.coords.latitude, lng: p.coords.longitude, label: 'My location' })
-      },
-      () => {
-        setBusy(false)
-        setGeoError('Location permission was denied or timed out. Pick an area below or enter coordinates.')
-      },
-      { timeout: 8000, maximumAge: 60000 },
-    )
-  }
-  const valid = Number.isFinite(Number(lat)) && Number.isFinite(Number(lng)) && lat !== '' && lng !== '' && Math.abs(Number(lat)) <= 90 && Math.abs(Number(lng)) <= 180
-  return (
-    <Sheet open={open} onClose={onClose} title="Starting point">
-      <Button variant="secondary" className="w-full" onClick={locate} loading={busy}>
-        <LocateFixed className="size-4" /> Use my location
-      </Button>
-      {geoError ? <Notice tone="amber" className="mt-3">{geoError}</Notice> : null}
-      <div className="mt-4 space-y-2">
-        {PRESET_AREAS.map((a) => (
-          <button key={a.label} onClick={() => onPick(a)} className="flex w-full items-center gap-3 rounded-2xl bg-surface-2 p-3 text-left hover:bg-line">
-            <MapPin className="size-4 text-muted" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold">{a.label}</span>
-              <span className="mt-1 block font-mono text-[11px] text-muted">{a.lat.toFixed(4)}, {a.lng.toFixed(4)}</span>
-            </span>
-          </button>
-        ))}
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <input className={inputClass} inputMode="decimal" placeholder="Latitude" value={lat} onChange={(e) => setLat(e.target.value)} aria-label="Latitude" />
-        <input className={inputClass} inputMode="decimal" placeholder="Longitude" value={lng} onChange={(e) => setLng(e.target.value)} aria-label="Longitude" />
-      </div>
-      <Button className="mt-3 w-full" disabled={!valid} onClick={() => onPick({ lat: Number(lat), lng: Number(lng), label: `${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}` })}>
-        Use coordinates
-      </Button>
-      <p className="mt-3 text-xs text-muted">The demo origin uses seeded road distances. Other points use a labelled demo road estimate (or live OSRM routing if enabled in Settings).</p>
-    </Sheet>
   )
 }

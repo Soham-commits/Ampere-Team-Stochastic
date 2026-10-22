@@ -7,6 +7,7 @@ import { readStream } from '../src/server/eventStore'
 import { replay } from '../src/domain/booking'
 import { userById } from '../src/domain/catalogue'
 import { DEMO_ORIGIN, POLICY } from '../src/domain/policy'
+import { MIT_WPU_ORIGIN, startingOrigin } from '../src/lib/deviceLocation'
 
 const as = (id: string) => ({ actor: userById(id)! })
 const driver = as('u-driver')
@@ -26,6 +27,28 @@ async function slot(resourceId: string, mins = 90) {
 }
 
 describe('AT17/AT18 strict discovery', () => {
+  it('starts at MIT-WPU with nearby compatible bookable demo chargers', async () => {
+    expect(startingOrigin()).toEqual(MIT_WPU_ORIGIN)
+    expect(startingOrigin(DEMO_ORIGIN)).toEqual(MIT_WPU_ORIGIN)
+    expect(startingOrigin({ ...DEMO_ORIGIN, label: 'Koregaon Park, Pune' })).toEqual(MIT_WPU_ORIGIN)
+    const result = await searchChargers({ origin: MIT_WPU_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 4, bookable_only: true })
+    expect(result.results.map((r) => r.site.id)).toEqual(expect.arrayContaining(['site-kothrud-cafe', 'site-paud-workspace', 'site-rambaug-charge']))
+    expect(result.results.every((r) => r.route.distance_m <= result.budget.range_budget_m)).toBe(true)
+  })
+  it('booking discovery returns only supported connectors on reservable bays with slots', async () => {
+    const r = await searchChargers({ origin: DEMO_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 80, bookable_only: true })
+    expect(r.results.length).toBeGreaterThan(0)
+    for (const result of r.results) {
+      expect(result.reservable).toBe(true)
+      expect(result.next_slot).not.toBeNull()
+      expect(result.site.source_kind).not.toBe('DIRECTORY')
+      expect(result.connectors.length).toBeGreaterThan(0)
+      expect(result.connectors.every((connector) => r.model.connectors.some((support) => !support.adapter_required && support.standard === connector.standard && support.mode === connector.mode))).toBe(true)
+    }
+    await mutateDb((d) => { d.rules = [] })
+    const closed = await searchChargers({ origin: DEMO_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 80, bookable_only: true })
+    expect(closed.results).toEqual([])
+  })
   it('at 4% hides the out-of-range office, the wrong connector and the faulted charger', async () => {
     const r = await searchChargers({ origin: DEMO_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 4 })
     const ids = r.results.map((x) => x.site.id)
