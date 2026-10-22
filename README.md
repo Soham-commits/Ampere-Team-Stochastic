@@ -20,12 +20,12 @@ The full product thinking lives in the [Ampere Product Solution Document](Ampere
 
 ## Repository layout
 
-This repository holds two separate projects:
+Ampere ships as a single web app: the landing page is served at `/` and the charging app at `/app/`, both from one Vite project and one dev server.
 
 | Path | What it is | Stack |
 | --- | --- | --- |
-| [`/`](package.json) (`src/`, `index.html`, `public/`) | Marketing landing page with scroll animation and a phone-mockup hero | Vite, GSAP, Lenis |
-| [`frontend/`](frontend/README.md) | The Ampere charging app, an installable front-end PWA | React 19, TypeScript, Tailwind CSS 4, Leaflet, Vite, Vitest |
+| [`/`](package.json) (`src/`, `index.html`, `public/`, `vite.config.js`) | Landing page with scroll animation and a phone-mockup hero. Its Vite config also mounts the charging app at `/app/` | Vite, GSAP, Lenis |
+| [`frontend/`](frontend/README.md) | The charging app, an installable front-end PWA that opens from the landing page | React 19, TypeScript, Tailwind CSS 4, Leaflet, Vite, Vitest |
 
 ## Key features (charging app)
 
