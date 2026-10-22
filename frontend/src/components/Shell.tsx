@@ -133,11 +133,11 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
         </div>
       </aside>
 
-      <main className={cn('mx-auto w-full', !dark && 'max-w-6xl', pathname === '/home' && 'home-scroll-area')}>{children}</main>
+      <main className={cn('mx-auto w-full', !dark && 'max-w-6xl')}>{children}</main>
 
       {/* Mobile floating nav */}
-      <div className="bottom-safe fixed inset-x-0 z-[900] flex items-center justify-center gap-3 px-4 lg:hidden">
-        <nav aria-label="Main" className={cn('flex flex-1 items-center gap-1 rounded-full p-1.5 shadow-float backdrop-blur-xl sm:max-w-md', dark ? 'bg-night-2/90' : 'bg-surface/90')}>
+      <div className="bottom-safe pointer-events-none fixed inset-x-0 z-[900] flex items-center justify-center gap-3 bg-transparent px-4 lg:hidden">
+        <nav aria-label="Main" className={cn('pointer-events-auto isolate flex flex-1 items-center gap-1 overflow-hidden rounded-full p-1.5 shadow-float backdrop-blur-xl sm:max-w-md', dark ? 'bg-night-2/90' : 'bg-surface/90')}>
           {items.map((it) => (
             <NavLink
               key={it.to}
@@ -160,7 +160,7 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <Link to="/settings" aria-label="Profile and settings" className={cn('grid size-[60px] shrink-0 place-items-center rounded-full shadow-float transition active:scale-95', dark ? 'bg-surface text-ink' : 'bg-volt text-white')}>
+        <Link to="/settings" aria-label="Profile and settings" className={cn('pointer-events-auto grid size-[60px] shrink-0 place-items-center rounded-full shadow-float transition active:scale-95', dark ? 'bg-surface text-ink' : 'bg-volt text-white')}>
           <UserRound className="size-5" />
         </Link>
       </div>

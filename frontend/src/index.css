@@ -210,11 +210,7 @@ a.bg-volt {
 }
 .driver-home { padding-bottom: 3rem; }
 @media (max-width: 1023px) {
-  .home-scroll-area {
-    height: calc(100dvh - 82px - env(safe-area-inset-bottom));
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-  }
+  .driver-home { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
 }
 @media (min-width: 1024px) {
   .driver-home { padding-bottom: 3rem; }
