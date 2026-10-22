@@ -11,16 +11,12 @@ import { rangeBudget } from '../domain/calc'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
 import { POLICY } from '../domain/policy'
 import { istDayLabel, istTime, km, relativeAge } from '../lib/format'
-import { startingOrigin } from '../lib/deviceLocation'
+import { MIT_WPU_ORIGIN } from '../domain/mockLocation'
+import { useMyVehicle } from '../app/useMyVehicle'
+import { useBookableChargers } from '../features/discovery/useBookableChargers'
 import { api } from '../server/api'
 import { readDb } from '../server/db'
 
-
-export function useMyVehicle() {
-  const user = useSession()
-  const q = useQuery(async () => ({ ok: true as const, data: readDb().vehicles.find((v) => v.owner_id === user?.id) ?? null, request_id: '' }), [user?.id])
-  return q.data
-}
 
 export default function DriverHome() {
   const user = useSession()!
@@ -43,14 +39,12 @@ export default function DriverHome() {
     timer.current = setTimeout(() => vehicle && api.updateVehicle(vehicle.id, { soc: v }), 350)
   }
 
-  const origin = startingOrigin(readDb().last_origin[user.id])
-  const search = useQuery(
-    () => api.searchChargers({ bookable_only: true, origin, model_id: vehicle?.model_id ?? '', soc: soc ?? 0 }),
-    [origin.lat, origin.lng, vehicle?.model_id, soc],
-  )
+  const origin = MIT_WPU_ORIGIN
+  const search = useBookableChargers({ modelId: vehicle?.model_id, soc })
   const mapSites = [...new Map((search.data?.results ?? []).map((r) => [r.site.id, {
     site: r.site, reservable: r.reservable, label: r.site.name,
   }])).values()]
+  const furthestRouteM = Math.max(0, ...(search.data?.results ?? []).map((result) => result.route.distance_m))
   const hour = Number(new Intl.DateTimeFormat('en-IN', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Kolkata' }).format(now))
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
@@ -93,10 +87,11 @@ export default function DriverHome() {
               <span className="flex min-w-0 items-center gap-1 text-ink-2"><LocateFixed className="size-3.5 shrink-0" /><span className="truncate">{origin.label}</span></span>
             </div>
             <section aria-label="Reachable chargers map" className="relative isolate h-[clamp(17rem,76vw,24rem)] overflow-hidden rounded-[2.5rem] bg-night">
-              {Number.isFinite(origin.lat) ? <MapView origin={origin} budgetM={budget.range_budget_m} sites={mapSites} selectedId={null} onSelect={(id) => navigate(`/station/${id}`)} compact className="absolute inset-0" /> : <div className="flex h-full items-center justify-center bg-surface-2 px-6 text-center text-sm text-ink-2">Allow location access or choose a starting point to find compatible chargers.</div>}
+              <MapView origin={origin} budgetM={Math.min(soc * 1000, budget.range_budget_m)} sites={mapSites} selectedId={null} onSelect={(id) => navigate(`/station/${id}`)} compact className="absolute inset-0" />
               <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] bg-gradient-to-b from-white/95 to-transparent p-5 text-[#0e0f0e]">
                 <p className="text-[11px] font-medium text-[#526079]">Compatible with your {model.make} {model.model}</p>
-                <p className="mt-1 text-lg font-semibold tracking-tight">{!Number.isFinite(origin.lat) ? 'Choose your starting point' : search.loading ? 'Finding reachable chargers…' : search.error ? 'Charger search unavailable' : `${mapSites.length} reachable demo ${mapSites.length === 1 ? 'site' : 'sites'}`}</p>
+                <p aria-live="polite" className="mt-1 text-lg font-semibold tracking-tight">{search.loading ? 'Finding reachable chargers…' : search.error ? 'Charger search unavailable' : `${mapSites.length} reachable demo ${mapSites.length === 1 ? 'site' : 'sites'}`}</p>
+                <p className="mt-1 text-[11px] text-[#526079]">At {soc}% battery · searching within {km(Math.min(soc * 1000, budget.range_budget_m))} · {furthestRouteM ? `furthest option ${km(furthestRouteM)} away` : 'no reachable option'} · simulated routes</p>
               </div>
               <Link to="/discover" className="absolute bottom-8 right-4 z-[500] rounded-full bg-surface px-5 py-3 text-xs font-semibold shadow-soft">View chargers <ArrowRight className="ml-1 inline size-4" /></Link>
             </section>
@@ -104,7 +99,7 @@ export default function DriverHome() {
             <Link to="/discover" className="mt-5 flex min-h-[88px] items-center gap-3 rounded-[2rem] bg-volt px-5 py-3 text-white transition active:scale-[0.99]">
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold tracking-tight">Find a reachable charger</span>
-                <span className="mt-0.5 block text-xs">Within {km(budget.range_budget_m)} on the road · your connectors only</span>
+                <span className="mt-0.5 block text-xs">Within {km(Math.min(soc * 1000, budget.range_budget_m))} of MIT-WPU · your connectors only</span>
               </span>
               <span className="grid size-11 shrink-0 place-items-center rounded-full bg-ink text-white"><ArrowRight className="size-5" /></span>
             </Link>

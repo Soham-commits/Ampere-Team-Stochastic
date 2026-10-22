@@ -9,7 +9,7 @@ import { POLICY } from '../domain/policy'
 import { cn } from '../lib/cn'
 import { km } from '../lib/format'
 import { api } from '../server/api'
-import { useMyVehicle } from './DriverHome'
+import { useMyVehicle } from '../app/useMyVehicle'
 
 export default function Vehicle() {
   const user = useSession()!

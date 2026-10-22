@@ -7,7 +7,7 @@ import { readStream } from '../src/server/eventStore'
 import { replay } from '../src/domain/booking'
 import { userById } from '../src/domain/catalogue'
 import { DEMO_ORIGIN, POLICY } from '../src/domain/policy'
-import { MIT_WPU_ORIGIN, startingOrigin } from '../src/lib/deviceLocation'
+import { MIT_WPU_ORIGIN } from '../src/domain/mockLocation'
 
 const as = (id: string) => ({ actor: userById(id)! })
 const driver = as('u-driver')
@@ -27,10 +27,22 @@ async function slot(resourceId: string, mins = 90) {
 }
 
 describe('AT17/AT18 strict discovery', () => {
+  it('progressively reveals farther sites as battery rises and hides them again when it drops', async () => {
+    const levels = [4, 10, 20, 40, 60, 80]
+    const results = await Promise.all(levels.map((soc) => searchChargers({ origin: MIT_WPU_ORIGIN, model_id: 'vm-nexon-ev-demo', soc, radius_km: soc, bookable_only: true })))
+    const counts = results.map((result) => new Set(result.results.map((r) => r.site.id)).size)
+    for (let index = 1; index < counts.length; index++) {
+      expect(counts[index]).toBeGreaterThan(counts[index - 1])
+      const previousIds = results[index - 1].results.map((r) => r.resource_id)
+      expect(results[index].results.map((r) => r.resource_id)).toEqual(expect.arrayContaining(previousIds))
+    }
+    for (const [index, result] of results.entries()) {
+      expect(result.results.every((r) => r.route.distance_m <= Math.min(result.budget.range_budget_m, levels[index] * 1000) && r.reservable && r.next_slot)).toBe(true)
+    }
+    const reduced = await searchChargers({ origin: MIT_WPU_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 4, bookable_only: true })
+    expect(reduced.results.map((r) => r.resource_id)).toEqual(results[0].results.map((r) => r.resource_id))
+  })
   it('starts at MIT-WPU with nearby compatible bookable demo chargers', async () => {
-    expect(startingOrigin()).toEqual(MIT_WPU_ORIGIN)
-    expect(startingOrigin(DEMO_ORIGIN)).toEqual(MIT_WPU_ORIGIN)
-    expect(startingOrigin({ ...DEMO_ORIGIN, label: 'Koregaon Park, Pune' })).toEqual(MIT_WPU_ORIGIN)
     const result = await searchChargers({ origin: MIT_WPU_ORIGIN, model_id: 'vm-nexon-ev-demo', soc: 4, bookable_only: true })
     expect(result.results.map((r) => r.site.id)).toEqual(expect.arrayContaining(['site-kothrud-cafe', 'site-paud-workspace', 'site-rambaug-charge']))
     expect(result.results.every((r) => r.route.distance_m <= result.budget.range_budget_m)).toBe(true)

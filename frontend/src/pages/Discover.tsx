@@ -2,7 +2,7 @@ import { SolarBadge } from '../features/solar/SolarBadge'
 import { ChevronRight, Clock3, Zap, List, Map as MapIcon, MapPin, Navigation, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useMediaQuery, useNow, useQuery, useSession } from '../app/hooks'
+import { useMediaQuery, useNow } from '../app/hooks'
 import { SITE_TYPE_LABEL, StatusLine } from '../components/booking'
 import { ChargingBayPlan } from '../components/ChargingBayPlan'
 import { MapView, type MapSite } from '../components/MapView'
@@ -11,12 +11,12 @@ import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
 import type { ConnectorStandard, SiteType } from '../domain/types'
 import { cn } from '../lib/cn'
 import { istDayLabel, istTime, km, rupees } from '../lib/format'
-import { startingOrigin } from '../lib/deviceLocation'
+import { MIT_WPU_ORIGIN } from '../domain/mockLocation'
+import { useBookableChargers } from '../features/discovery/useBookableChargers'
 import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
-import { readDb } from '../server/db'
 import type { SearchResult } from '../server/discovery'
-import { useMyVehicle } from './DriverHome'
+import { useMyVehicle } from '../app/useMyVehicle'
 
 export interface SiteGroup {
   siteId: string
@@ -30,7 +30,6 @@ export function groupBySite(results: SearchResult[]) {
 }
 
 export default function Discover() {
-  const user = useSession()!
   const vehicle = useMyVehicle()
   const [params, setParams] = useSearchParams()
   const nav = useNavigate()
@@ -38,8 +37,7 @@ export default function Discover() {
   const now = useNow(15000)
 
   // Console deep links can override car inputs; the mock origin stays at MIT-WPU.
-  const saved = readDb().last_origin[user.id]
-  const origin = startingOrigin(saved)
+  const origin = MIT_WPU_ORIGIN
   const modelId = params.get('model') ?? vehicle?.model_id ?? null
   const soc = params.get('soc') !== null ? Number(params.get('soc')) : vehicle?.soc ?? null
   const connector = (params.get('connector') as ConnectorStandard | null) ?? undefined
@@ -58,10 +56,7 @@ export default function Discover() {
     setParams(p, { replace: true })
   }
 
-  const search = useQuery(
-    () => (model && soc !== null ? api.searchChargers({ bookable_only: true, origin, model_id: model.id, soc, connector, site_type: siteType }) : Promise.resolve({ ok: false as const, error: { code: 'INPUT_REQUIRED', message: 'Car, battery and origin are required.' }, request_id: '' })),
-    [origin.lat, origin.lng, model?.id, soc, connector, siteType],
-  )
+  const search = useBookableChargers({ modelId: model?.id, soc, connector, siteType })
   const groups = useMemo(() => groupBySite(search.data?.results ?? []), [search.data])
   const mapSites: MapSite[] = groups.map((g) => ({ site: g[0].site, reservable: g.some((r) => r.reservable), label: g[0].site.name }))
   const selectedGroup = groups.find((g) => g[0].site.id === selected)
@@ -169,7 +164,7 @@ export default function Discover() {
   const map = (
     <MapView
       origin={origin}
-      budgetM={search.data?.budget.range_budget_m ?? 0}
+      budgetM={Math.min((soc ?? 0) * 1000, search.data?.budget.range_budget_m ?? 0)}
       sites={mapSites}
       selectedId={selected}
       onSelect={(id) => {

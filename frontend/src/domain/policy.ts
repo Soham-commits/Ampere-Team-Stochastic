@@ -2,7 +2,7 @@ import type { Policy } from './types'
 
 /** Versioned policy record. Snapshotted onto every quote and booking. */
 export const POLICY: Policy = {
-  version: 'policy-2026-10-21.1',
+  version: 'policy-2026-10-22.1',
   host_response_s: 120,
   checkout_s: 300,
   quote_validity_s: 300,
@@ -19,7 +19,7 @@ export const POLICY: Policy = {
   host_status_fresh_s: 15 * 60,
   telemetry_fresh_s: 2 * 60,
   commission_bps: 1500,
-  max_radius_km: 25,
+  max_radius_km: 160,
   arrival_token_ttl_s: 15 * 60,
   arrival_token_max_attempts: 5,
   demo_session_seconds: 60,

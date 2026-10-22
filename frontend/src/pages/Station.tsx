@@ -4,7 +4,7 @@ import { SolarBadge } from '../features/solar/SolarBadge'
 import { Accessibility, CalendarClock, Clock, Info, ShieldCheck, Zap } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { useNow, useQuery, useSession } from '../app/hooks'
+import { useNow, useQuery } from '../app/hooks'
 import { SITE_TYPE_LABEL, StatusLine, siteIcon } from '../components/booking'
 import { ChargingBayPlan } from '../components/ChargingBayPlan'
 import { DurationDial } from '../components/DurationDial'
@@ -17,24 +17,22 @@ import type { ConnectorStandard, Plan } from '../domain/types'
 import { cn } from '../lib/cn'
 import { countdown, istTime, km, kwh, minutes, rupees } from '../lib/format'
 import { uuid } from '../lib/ids'
-import { startingOrigin } from '../lib/deviceLocation'
+import { MIT_WPU_ORIGIN } from '../domain/mockLocation'
+import { useBookableChargers } from '../features/discovery/useBookableChargers'
 import { stationImage } from '../lib/stationImages'
 import { api } from '../server/api'
 import type { Quote } from '../server/db'
-import { readDb } from '../server/db'
-import { useMyVehicle } from './DriverHome'
+import { useMyVehicle } from '../app/useMyVehicle'
 
 export default function Station() {
   const { siteId } = useParams()
-  const user = useSession()!
   const vehicle = useMyVehicle()
   const [params] = useSearchParams()
   const nav = useNavigate()
   const now = useNow(1000)
   const { run, busy } = useAction()
 
-  const saved = readDb().last_origin[user.id]
-  const origin = startingOrigin(saved)
+  const origin = MIT_WPU_ORIGIN
   const modelId = params.get('model') ?? vehicle?.model_id
   const soc = params.get('soc') !== null ? Number(params.get('soc')) : vehicle?.soc
   const connectorFilter = (params.get('connector') as ConnectorStandard | null) ?? undefined
@@ -42,7 +40,7 @@ export default function Station() {
 
   const detail = useQuery(() => api.siteDetail(siteId!), [siteId])
   // Eligibility uses the exact discovery filter; a deep link cannot bypass it.
-  const search = useQuery(() => (model && soc !== undefined ? api.searchChargers({ bookable_only: true, origin, model_id: model.id, soc, connector: connectorFilter }) : Promise.resolve({ ok: false as const, error: { code: 'INPUT_REQUIRED', message: 'Choose a car first.' }, request_id: '' })), [model?.id, soc, origin.lat, origin.lng, connectorFilter])
+  const search = useBookableChargers({ modelId: model?.id, soc, connector: connectorFilter })
   const eligible = useMemo(() => (search.data?.results ?? []).filter((r) => r.site.id === siteId), [search.data, siteId])
   const options = useMemo(() => eligible.filter((r) => r.reservable).flatMap((r) => r.connectors.map((c) => ({ ...c, resource_id: r.resource_id, resource_label: r.resource_label }))), [eligible])
 
