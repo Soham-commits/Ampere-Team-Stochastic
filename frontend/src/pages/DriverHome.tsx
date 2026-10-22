@@ -1,3 +1,6 @@
+import { recentBookingAlerts } from '../features/notifications/recentAlerts'
+import type { EventPayloads } from '../domain/booking'
+import { RecentAlertCard } from '../components/RecentAlertCard'
 import { bookingSiteName } from '../lib/bookingSiteName'
 import { ArrowRight, BatteryCharging, Bell, Gauge, CreditCard, CircleCheck, Clock3, Target, LocateFixed } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -11,7 +14,7 @@ import { Button, Card, EmptyState, Range, SectionTitle } from '../components/ui'
 import { rangeBudget } from '../domain/calc'
 import { CONNECTOR_LABEL, modelById } from '../domain/catalogue'
 import { POLICY } from '../domain/policy'
-import { istDayLabel, istTime, km, relativeAge } from '../lib/format'
+import { istDayLabel, istTime, km, relativeAge, rupees } from '../lib/format'
 import { MIT_WPU_ORIGIN } from '../domain/mockLocation'
 import { useMyVehicle } from '../app/useMyVehicle'
 import { useBookableChargers } from '../features/discovery/useBookableChargers'
@@ -154,21 +157,15 @@ export default function DriverHome() {
             )}
 
             <SectionTitle className="!mt-8 !mb-4" action={<Link to="/inbox" className="text-sm font-semibold text-ink">View all</Link>}>Recent alerts</SectionTitle>
-            <div className="grid grid-cols-2 gap-4">
-              {items.slice(0, 4).map((n) => {
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              {recentBookingAlerts(items).map((n, index, alerts) => {
                 const booking = bookings.data?.find((b) => b.header.id === n.booking_id)
                 const title = n.event.event_type === 'PaymentCaptured' ? 'Payment received' : n.event.event_type === 'HostConfirmed' ? 'Space confirmed' : n.event.event_type === 'ChargingCompleted' ? 'Charge complete' : n.title
+                const context = n.event.event_type === 'PaymentCaptured' ? `${rupees((n.event.payload as EventPayloads['PaymentCaptured']).amount_paise)} paid` : booking ? `${istDayLabel(booking.state.request.start_at, now)} · ${istTime(booking.state.request.start_at)}–${istTime(booking.state.request.end_at)}` : undefined
+                const artwork = n.event.event_type === 'PaymentCaptured' ? 'payment' : n.event.event_type === 'HostConfirmed' || n.event.event_type === 'ArrivalVerified' ? 'confirmation' : n.event.event_type === 'ChargingCompleted' || n.event.event_type === 'ChargingStarted' ? 'charge' : 'update'
                 const Icon = n.event.event_type === 'PaymentCaptured' ? CreditCard : n.event.event_type === 'HostConfirmed' || n.event.event_type === 'ChargingCompleted' ? CircleCheck : Clock3
                 return (
-                  <Link key={n.event.event_id} to={`/booking/${n.booking_id}`} className="group flex min-w-0 flex-col rounded-[1.75rem] border border-line bg-surface-2 p-4 sm:p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white text-volt shadow-soft"><Icon className="size-[18px]" /></span>
-                      <span className="pt-1 text-right text-[10px] leading-tight text-muted">{relativeAge(n.event.recorded_at, now)}</span>
-                    </div>
-                    <h3 className="mt-5 text-sm font-semibold leading-snug tracking-tight">{title}</h3>
-                    <p className="mt-2 flex-1 text-[11px] leading-relaxed text-muted">{booking ? bookingSiteName(booking.state.request) : n.body}</p>
-                    <span className="mt-4 inline-flex items-center justify-between text-[10px] font-medium text-volt-strong">View booking <ArrowRight className="size-3.5 transition group-hover:translate-x-0.5" /></span>
-                  </Link>
+                  <RecentAlertCard key={n.event.event_id} to={`/booking/${n.booking_id}`} title={title} detail={booking ? bookingSiteName(booking.state.request) : n.body} timestamp={relativeAge(n.event.recorded_at, now)} bookingRef={n.booking_ref} context={context} artwork={artwork} icon={Icon} index={index} count={alerts.length} />
                 )
               })}
               {!items.length ? <Card className="col-span-2 text-sm text-muted">Booking updates will appear here.</Card> : null}
