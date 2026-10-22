@@ -7,7 +7,6 @@ export const SPLIT_TOTAL_PAISE = 13200
 const DRIVER_SPLIT: { to: string; amount: string; pct: string; strong?: boolean }[] = [
   { to: 'Government (GST on energy)', amount: '₹17.08', pct: '12.9%' },
   { to: 'Electricity cost (host pays the utility)', amount: '₹76.88', pct: '58.2%' },
-  { to: 'Host profit', amount: '₹1.24', pct: '0.9%', strong: true },
   { to: 'Ampere commission', amount: '₹16.80', pct: '12.7%', strong: true },
   { to: 'Ampere booking fee', amount: '₹20.00', pct: '15.2%', strong: true },
 ]
@@ -15,7 +14,6 @@ const DRIVER_SPLIT: { to: string; amount: string; pct: string; strong?: boolean 
 const SIDE_BY_SIDE = [
   { k: 'Money received', host: '₹78.12 (59.2% of ₹132)', admin: '₹36.80 gross (27.9%)' },
   { k: 'Costs', host: '₹76.88 electricity', admin: 'about ₹13.66 (GST on the fee, gateway, support and other costs)' },
-  { k: 'Profit', host: '₹1.24', admin: '₹23.14 net (17.5%)', strong: true },
 ]
 
 export function DemoRevenueSplit() {
@@ -47,7 +45,7 @@ export function DemoRevenueSplit() {
         <h2 className="font-semibold">Host and admin side by side</h2>
         <div className="mt-2 divide-y divide-line text-sm">
           {SIDE_BY_SIDE.map((r) => (
-            <div key={r.k} className={`py-2.5 ${r.strong ? 'font-semibold' : ''}`}>
+            <div key={r.k} className="py-2.5">
               <div className="text-xs font-normal text-muted">{r.k}</div>
               <div className="mt-1 grid grid-cols-1 gap-1 min-[420px]:grid-cols-2 min-[420px]:gap-4">
                 <div className="min-w-0 break-words">
