@@ -58,12 +58,12 @@ export default function HostListings() {
                 <div className="flex items-start gap-3">
                   <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-surface-2">{siteIcon(site.site_type)}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold">{site.name}</div>
+                    <div className="break-words font-semibold">{site.name}</div>
                     <div className="text-xs text-muted">
                       {SITE_TYPE_LABEL[site.site_type]} · {site.public_area}
                     </div>
                   </div>
-                  <Chip tone={STATE_TONE[site.listing_state]}>{site.listing_state.replace('_', ' ').toLowerCase()}</Chip>
+                  <Chip className="shrink-0" tone={STATE_TONE[site.listing_state]}>{site.listing_state.replace('_', ' ').toLowerCase()}</Chip>
                 </div>
                 {site.rejection_reasons?.length ? <Notice tone="danger" title="Changes requested">{site.rejection_reasons.join('; ')}</Notice> : null}
                 {site.suspension_reason ? <Notice tone="danger" title="Suspended by an administrator">{site.suspension_reason}</Notice> : null}
@@ -122,11 +122,11 @@ function ResourceEditor({ resource }: { resource: Res }) {
   const toIso = (v: string) => new Date(`${v}:00+05:30`).toISOString()
   return (
     <div className="rounded-2xl bg-surface-2 p-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-0.5 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between min-[420px]:gap-2">
         <div className="text-sm font-semibold">{resource.label}</div>
         <div className="text-xs text-muted">{resource.connectors.map((c) => `${CONNECTOR_LABEL[c.standard]} ${c.rated_power_kw} kW`).join(' · ')}</div>
       </div>
-      <div className="mt-3 grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+      <div className="mt-3 grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_1fr_auto] [&>*]:min-w-0">
         <Field label="Daily from (IST)">
           <select className={inputClass} value={start} onChange={(e) => setStart(Number(e.target.value))}>
             {TIMES.slice(0, -1).map((t) => (
@@ -143,6 +143,7 @@ function ResourceEditor({ resource }: { resource: Res }) {
         </Field>
         <Button
           size="lg"
+          className="col-span-2 sm:col-span-1"
           disabled={!dirty}
           loading={busy === 'sched'}
           onClick={async () => {
@@ -157,17 +158,17 @@ function ResourceEditor({ resource }: { resource: Res }) {
       <div className="mt-2 space-y-1.5">
         {resource.exceptions.map((x) => (
           <div key={x.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2 text-xs">
-            <CalendarX className="size-3.5 text-muted" />
-            <span className="flex-1">
+            <CalendarX className="size-3.5 shrink-0 text-muted" />
+            <span className="min-w-0 flex-1 break-words">
               {x.kind === 'HOST_USE' ? 'Own car' : 'Blackout'} · {istDateTime(x.start_at)} → {istDateTime(x.end_at)}
             </span>
-            <button aria-label="Remove" onClick={() => run('rm', () => api.removeBlackout(x.id), 'Removed')}>
+            <button className="shrink-0" aria-label="Remove" onClick={() => run('rm', () => api.removeBlackout(x.id), 'Removed')}>
               <Trash2 className="size-3.5 text-muted hover:text-danger" />
             </button>
           </div>
         ))}
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+      <div className="mt-2 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-[1fr_1fr_auto_auto] [&>*]:min-w-0">
         <input type="datetime-local" className={inputClass + ' !h-10 text-sm'} value={bStart} onChange={(e) => setBStart(e.target.value)} aria-label="Block from (IST)" />
         <input type="datetime-local" className={inputClass + ' !h-10 text-sm'} value={bEnd} onChange={(e) => setBEnd(e.target.value)} aria-label="Block until (IST)" />
         <select className={inputClass + ' !h-10 text-sm'} value={kind} onChange={(e) => setKind(e.target.value as 'BLACKOUT' | 'HOST_USE')} aria-label="Kind">
@@ -176,7 +177,7 @@ function ResourceEditor({ resource }: { resource: Res }) {
         </select>
         <Button
           size="sm"
-          className="h-10"
+          className="h-10 min-[420px]:col-span-2 sm:col-span-1"
           disabled={!bStart || !bEnd}
           onClick={async () => {
             const r = await run('bl', () => api.addBlackout(resource.id, toIso(bStart), toIso(bEnd), kind, kind === 'HOST_USE' ? 'Charging own car' : 'Unavailable'))

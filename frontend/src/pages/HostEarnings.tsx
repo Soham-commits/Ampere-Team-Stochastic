@@ -16,8 +16,8 @@ export default function HostEarnings() {
     <>
       <PageHeader user={user} title="Earnings" subtitle="Illustrative — no payouts in the demo" />
       <Page className="mx-auto max-w-3xl">
-        <div className="grid grid-cols-2 gap-3">
-          <StatTile icon={<Wallet className="size-4" />} label="Pending proceeds" value={rupees(q.data?.pending_paise ?? 0, { decimals: true })} />
+        <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 [&>*]:min-w-0">
+          <StatTile className="[&_.text-\[34px\]]:text-[28px] sm:[&_.text-\[34px\]]:text-[34px] [&_.text-\[34px\]]:break-words" icon={<Wallet className="size-4 shrink-0" />} label="Pending proceeds" value={rupees(q.data?.pending_paise ?? 0, { decimals: true })} />
           <StatTile label="Completed sessions" value={rows.length} />
         </div>
         <Notice className="mt-4" tone="amber" title="Before your costs">
@@ -26,16 +26,16 @@ export default function HostEarnings() {
         <div className="mt-4 space-y-2">
           {rows.map((r) => (
             <Link key={r.header.id} to={`/receipt/${r.header.id}`} className="block">
-              <Card className="flex items-center justify-between gap-3 !p-3.5">
+              <Card className="flex flex-col gap-2 !p-3.5 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between min-[420px]:gap-3">
                 <div className="min-w-0">
-                  <div className="font-semibold">
+                  <div className="break-words font-semibold">
                     {r.header.booking_ref} · {bookingSiteName(r.state.request)}
                   </div>
-                  <div className="text-xs text-muted">
+                  <div className="break-words text-xs text-muted">
                     {istDateTime(r.state.completed_at!)} · {kwh(r.state.completed!.grid_wh)} · energy {rupees(r.energy_paise, { decimals: true })} − {rupees(r.commission_paise, { decimals: true })}
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 min-[420px]:text-right">
                   <div className="font-semibold">{rupees(r.host_paise, { decimals: true })}</div>
                   <div className="text-[11px] text-muted">pending · demo</div>
                 </div>
