@@ -1,13 +1,15 @@
-import { BatteryCharging, Flag, MapPin, Route, Zap } from 'lucide-react'
-import { useState } from 'react'
+import { BatteryCharging, Flag, MapPin, Navigation, Route, Zap } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSession } from '../../app/hooks'
 import { Page, PageHeader } from '../../components/Shell'
 import { Card, Notice, Range } from '../../components/ui'
 import { modelById } from '../../domain/catalogue'
 import { planTrip } from './planner'
-import { TRIP_ROUTES } from './routes'
+import { TripMap, type CorridorCharger, type TripMapPoint } from './TripMap'
+import { googleMapsDirectionsUrl, TRIP_COORDS, TRIP_ORIGIN, TRIP_ROUTES } from './routes'
 import { useDemoState } from '../shared/useDemoState'
+import { listAmpereStations, useSavedStations } from '../stations/saved'
 import { readDb } from '../../server/db'
 
 export default function TripPlanner() {
@@ -29,6 +31,29 @@ export default function TripPlanner() {
         model.dc_limit_kw,
       )
     : null
+  const mapPoints = useMemo<TripMapPoint[]>(() => {
+    const stops = (plan?.stops ?? []).flatMap((stop, i) => (TRIP_COORDS[stop.id] ? [{ ...TRIP_COORDS[stop.id], label: stop.name, kind: 'stop' as const, order: i + 1, detail: [`Planned stop ${i + 1} · ${stop.km} km from Pune`, `CCS2 DC · ${stop.powerKw} kW`, `${Math.floor(stop.arrivalSoc)}% → ${Math.round(stop.departureSoc)}% · ~${stop.minutes} min`, 'Sample stop · cannot be reserved'] }] : []))
+    return [
+      { lat: TRIP_ORIGIN.lat, lng: TRIP_ORIGIN.lng, label: TRIP_ORIGIN.label, kind: 'start' },
+      ...stops,
+      { ...TRIP_COORDS[route.id], label: route.destination, kind: 'end' },
+    ]
+  }, [plan, route])
+  const corridor = useMemo<CorridorCharger[]>(() => {
+    const planned = new Set((plan?.stops ?? []).map((s) => s.id))
+    return route.chargers.flatMap((c) =>
+      TRIP_COORDS[c.id] && !planned.has(c.id)
+        ? [{ ...TRIP_COORDS[c.id], id: c.id, label: c.name, detail: [`${c.km} km from Pune`, `CCS2 DC · ${c.powerKw} kW`, 'Sample stop · cannot be reserved'] }]
+        : [],
+    )
+  }, [plan, route])
+  const mapsUrl = googleMapsDirectionsUrl(
+    TRIP_ORIGIN,
+    mapPoints.filter((p) => p.kind === 'stop'),
+    TRIP_COORDS[route.id],
+  )
+  const stations = useMemo(() => listAmpereStations(), [])
+  const savedStations = useSavedStations(user.id)
   const isSaved = saved?.routeId === route.id && saved.soc === soc
   return (
     <>
@@ -109,6 +134,16 @@ export default function TripPlanner() {
                 </div>
               ))}
             </div>
+            <TripMap points={mapPoints} corridor={corridor} stations={stations} isSaved={savedStations.isSaved} onToggleSave={savedStations.toggle} className="mt-6 h-80 overflow-hidden rounded-3xl border border-line sm:h-[28rem]" />
+            <p className="mt-2 text-xs text-muted">Blue pins are Ampere stations you can save and book; numbered pins are your planned stops and grey pins are other chargers along the route (sample data). Tap any pin for details.</p>
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-volt px-5 font-semibold text-volt"
+            >
+              <Navigation className="size-4" /> Open route in Google Maps
+            </a>
             <h2 className="mb-4 mt-7 text-xl font-semibold">Your route</h2>
             <div className="space-y-3">
               <Card className="flex items-center gap-3 border border-line">

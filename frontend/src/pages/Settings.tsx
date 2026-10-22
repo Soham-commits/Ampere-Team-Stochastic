@@ -1,4 +1,5 @@
 import { ProfileTools } from '../components/ProfileTools'
+import { SavedStations } from '../components/SavedStations'
 import { ArrowUpRight, BatteryCharging, Gauge, Target, LogOut } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSession } from '../app/hooks'
@@ -76,6 +77,8 @@ export default function Settings() {
             <p className="mt-3 text-[11px] leading-relaxed text-muted">Battery level is entered by you, not live telemetry. Range budget includes {POLICY.reserve_pct}% reserve and ×{POLICY.uncertainty} uncertainty.</p>
           </section>
         ) : null}
+
+        <SavedStations />
 
         <ProfileTools />
 
