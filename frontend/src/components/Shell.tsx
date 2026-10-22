@@ -111,11 +111,11 @@ export function Shell({ user, children }: { user: User; children: ReactNode }) {
             <Bell className="size-4.5" /> Inbox {unread ? <span className="ml-auto rounded-full bg-amber px-2 text-xs text-white">{unread}</span> : null}
           </NavLink>
           <NavLink to="/settings" className={({ isActive }) => cn('flex h-11 items-center gap-3 rounded-2xl px-4 text-sm font-semibold', isActive ? 'bg-surface-2 text-ink' : 'text-ink-2 hover:bg-surface-2')}>
-            <Settings className="size-4.5" /> Settings & demo
+            <Settings className="size-4.5" /> Profile & settings
           </NavLink>
-          {primaryRole(user) !== 'jury' ? (
+          {primaryRole(user) === 'admin' ? (
             <NavLink to="/jury" className={({ isActive }) => cn('flex h-11 items-center gap-3 rounded-2xl px-4 text-sm font-semibold', isActive ? 'bg-surface-2 text-ink' : 'text-ink-2 hover:bg-surface-2')}>
-              <Terminal className="size-4.5" /> Jury console
+              <Terminal className="size-4.5" /> Diagnostics console
             </NavLink>
           ) : null}
         </nav>
